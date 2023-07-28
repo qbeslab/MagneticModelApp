@@ -30,6 +30,8 @@ classdef MagneticMap < handle
             obj.InitializeApp();
             obj.AddContourPlots();
             obj.AddAgent(agent);
+            obj.agent.Step(300);
+            obj.Center3DOnAgent();
 
             % % add interactivity
             % %    TODO adding these listeners tends to make the delete
@@ -59,7 +61,9 @@ classdef MagneticMap < handle
         function InitializeApp(obj)
             %INITIALIZEAPP Initialize the multi-panel app with 2D and 3D maps
             
-            obj.app = uifigure(Position=[100 100 1600 800]);
+            obj.app = uifigure(Position=[100 100 1200 600], WindowStyle="alwaysontop");  % laptop only
+            % obj.app = uifigure(Position=[100 100 1600 800], WindowStyle="alwaysontop");  % monitor only
+            % obj.app = uifigure(Position=[1920 265 1535 785]);  % dual monitors
             ug = uigridlayout(obj.app, [1,2]);
             p1 = uipanel(ug, Title="2D");
             p2 = uipanel(ug, Title="3D");
@@ -161,6 +165,8 @@ classdef MagneticMap < handle
             color = "magenta";
             
             % plot 2D trajectory
+            %    TODO this breaks if the trajectory wraps across the
+            %    east/west edges of the map
             obj.trajectory2D = geoplot(obj.g2D, ...
                 obj.agent.trajectory_lat, obj.agent.trajectory_lon, ...
                 '-', LineWidth=linewidth, Color=color);
@@ -215,7 +221,7 @@ classdef MagneticMap < handle
         %     % [lat, lon] = inputm;  % TODO not working
         %     % disp(['Latitude: ', char(string(lat)), '  Longitude: ', char(string(lon))]);
         % end
-        % 
+        %
         % function AskAgentToStep(obj, ~, ~)
         %     obj.agent.Step();
         % end
