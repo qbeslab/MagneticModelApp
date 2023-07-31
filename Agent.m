@@ -5,6 +5,12 @@ classdef Agent < handle
 
     properties
         magmodel
+        start_lat
+        start_lon
+        goal_lat
+        goal_lon
+        trajectory_lat
+        trajectory_lon
         start_I_INCL
         start_F_TOTAL
         goal_I_INCL
@@ -13,13 +19,10 @@ classdef Agent < handle
         current_F_TOTAL
     end
     
-    properties (SetObservable)
-        start_lat
-        start_lon
-        goal_lat
-        goal_lon
-        trajectory_lat
-        trajectory_lon
+    events
+        StartChanged
+        GoalChanged
+        TrajectoryChanged
     end
     
     methods
@@ -45,6 +48,8 @@ classdef Agent < handle
             disp('=== START SET ===')
             disp(['Latitude: ', char(string(obj.start_lat)), '  Longitude: ', char(string(obj.start_lon))]);
             disp(['Inclination: ', char(string(round(obj.start_I_INCL, 2))), '°  Intensity: ', char(string(round(obj.start_F_TOTAL, 2))), ' nT']);
+
+            notify(obj, "StartChanged");
         end
 
         function SetGoal(obj, lat, lon)
@@ -59,6 +64,8 @@ classdef Agent < handle
             disp('=== GOAL SET ===')
             disp(['Latitude: ', char(string(obj.goal_lat)), '  Longitude: ', char(string(obj.goal_lon))]);
             disp(['Inclination: ', char(string(round(obj.goal_I_INCL, 2))), '°  Intensity: ', char(string(round(obj.goal_F_TOTAL, 2))), ' nT']);
+
+            notify(obj, "GoalChanged");
         end
 
         function Reset(obj)
@@ -67,6 +74,8 @@ classdef Agent < handle
             obj.trajectory_lon = obj.start_lon;
             obj.current_I_INCL = obj.start_I_INCL;
             obj.current_F_TOTAL = obj.start_F_TOTAL;
+
+            notify(obj, "TrajectoryChanged");
         end
         
         function Step(obj, n)
@@ -95,6 +104,8 @@ classdef Agent < handle
                 obj.current_I_INCL = I;
                 obj.current_F_TOTAL = F;
             end
+
+            notify(obj, "TrajectoryChanged");
         end
     end
 end

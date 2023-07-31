@@ -3,6 +3,8 @@ classdef MagneticMap < handle
     % Required add-ons (use MATLAB's Add-On Explorer to install):
     %   - Mapping Toolbox
     %   - getContourLineCoordinates (from MathWorks File Exchange)
+    % Optional add-ons (use MATLAB's Add-On Explorer to install):
+    %   - MATLAB Basemap Data - colorterrain (install for offline use)
     
     properties
         magmodel
@@ -12,6 +14,8 @@ classdef MagneticMap < handle
         app
         g2D
         g3D
+        markers2D
+        markers3D
         trajectory2D
         trajectory3D
     end
@@ -31,7 +35,7 @@ classdef MagneticMap < handle
             obj.AddContourPlots();
             obj.AddAgent(agent);
             obj.agent.Step(300);
-            obj.Center3DOnAgent();
+            obj.Center3DCameraOnAgent();
 
             % % add interactivity
             % %    TODO adding these listeners tends to make the delete
@@ -77,7 +81,6 @@ classdef MagneticMap < handle
             geolimits(obj.g2D, [-70, 70], [-180, 180]);  % aspect ratio constraints often override this
             
             obj.g3D = geoglobe(p2, Basemap=basemap, Terrain="none");  % Terrain="none" flattens terrain so it does not occlude contours and trajectories
-            campos(obj.g3D, 0, 0, 1e7);  % explicitly setting camera position seems to prevent geoplot3 from moving the camera before user interaction
             % g3D.Position = [0 0 1 1];
 
             % % add basemap picker to 2D map, and ensure changing either basemap updates both
@@ -169,33 +172,125 @@ classdef MagneticMap < handle
             %    east/west edges of the map
             obj.trajectory2D = geoplot(obj.g2D, ...
                 obj.agent.trajectory_lat, obj.agent.trajectory_lon, ...
-                '-', LineWidth=linewidth, Color=color);
+                '-', LineWidth=linewidth, Color=color, Marker='none', MarkerSize=2);
 
             % plot 3D trajectory
             obj.trajectory3D = geoplot3(obj.g3D, ...
                 obj.agent.trajectory_lat, obj.agent.trajectory_lon, [], ...
-                '-', LineWidth=linewidth, Color=color);
+                '-', LineWidth=linewidth, Color=color, Marker='none', MarkerSize=2);
 
-            % addlistener(obj.agent, 'trajectory_lat', 'PostSet', @obj.UpdateTrajectory);
-            addlistener(obj.agent, 'trajectory_lon', 'PostSet', @obj.UpdateTrajectory);
+            % plot 2D markers for agent start and goal
+            obj.markers2D{1} = geoplot(obj.g2D, obj.agent.start_lat, obj.agent.start_lon, 'bo', MarkerSize=8, LineWidth=2);
+            obj.markers2D{2} = geoplot(obj.g2D, obj.agent.goal_lat, obj.agent.goal_lon, 'go', MarkerSize=8, LineWidth=2);
+            obj.markers2D{3} = geoplot(obj.g2D, obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end), 'mo', MarkerSize=8, LineWidth=2);
+
+            % plot 3D markers for agent start and goal
+            obj.markers3D{1} = geoplot3(obj.g3D, obj.agent.start_lat, obj.agent.start_lon, [], 'bo', MarkerSize=8, LineWidth=2);
+            obj.markers3D{2} = geoplot3(obj.g3D, obj.agent.goal_lat, obj.agent.goal_lon, [], 'go', MarkerSize=8, LineWidth=2);
+            obj.markers3D{3} = geoplot3(obj.g3D, obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end), [], 'mo', MarkerSize=8, LineWidth=2);
+
+            % update plots when agent changes
+            addlistener(obj.agent, 'StartChanged', @obj.UpdateAgentStart);
+            addlistener(obj.agent, 'GoalChanged', @obj.UpdateAgentGoal);
+            addlistener(obj.agent, 'TrajectoryChanged', @obj.UpdateAgentTrajectory);
         end
 
-        function UpdateTrajectory(obj, ~, ~)
-            %UPDATETRAJECTORY Update plots of agent trajectory
-            %   TODO sometimes plot will try to redraw when lat but not lon
-            %   has been updated -- workaround: listen for lon change
-            %   but not lat change
+        function ToggleAgentTrajectoryMarkers(obj)
+            %TOGGLEAGENTTRAJECTORYMARKERS Toggle the display of markers for every trajectory step
+            if obj.trajectory2D.Marker == "none"
+                obj.trajectory2D.Marker = 'o';
+            else
+                obj.trajectory2D.Marker = 'none';
+            end
+            if obj.trajectory3D.Marker == "none"
+                obj.trajectory3D.Marker = 'o';
+            else
+                obj.trajectory3D.Marker = 'none';
+            end
+        end
+
+        function Lock3DCamera(obj)
+            %LOCK3DCAMERA Prevent auto 3D camera adjustments when plots update
+            %   If the camera is moved using the mouse, auto camera
+            %   adjustments will resume, and this method should be run
+            %   again to stop them.
+
+            % % BUG this manual method does not really work as the docs say it should
+            % campos(obj.g3D, "manual");
+            % camheading(obj.g3D, "manual");
+            % campitch(obj.g3D, "manual");
+            % camroll(obj.g3D, "manual");
+
+            % this works better
+            [lat, lon, height] = campos(obj.g3D);
+            heading = camheading(obj.g3D); 
+            pitch = campitch(obj.g3D);
+            roll = camroll(obj.g3D);
+            campos(obj.g3D, lat, lon, height);
+            camheading(obj.g3D, heading);
+            campitch(obj.g3D, pitch);
+            camroll(obj.g3D, roll);
+        end
+
+        function Center3DCameraOnAgent(obj, height)
+            %CENTER3DONAGENT Move the 3D camera to the latest agent position
+            if nargin < 2
+                height = 7e6;  % meters above reference ellipsoid
+            end
+            campos(obj.g3D, obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end), height);
+            camheading(obj.g3D, 0);
+            campitch(obj.g3D, -90);
+            camroll(obj.g3D, 0);
+        end
+
+        function SetAgentStartTo3DCamPos(obj)
+            %SETAGENTSTARTTO3DCAMPOS Set the agent start position to the current 3D camera latitude and longitude
+            obj.Lock3DCamera;
+            [lat, lon, ~] = campos(obj.g3D);
+            obj.agent.SetStart(lat, lon);
+        end
+
+        function SetAgentGoalTo3DCamPos(obj)
+            %SETAGENTGOALTO3DCAMPOS Set the agent goal to the current 3D camera latitude and longitude
+            obj.Lock3DCamera;
+            [lat, lon, ~] = campos(obj.g3D);
+            obj.agent.SetGoal(lat, lon);
+        end
+
+        function UpdateAgentStart(obj, ~, ~)
+            %UPDATEAGENTSTARTANDGOAL Update markers for agent start
+
+            obj.markers2D{1}.LatitudeData = obj.agent.start_lat;
+            obj.markers2D{1}.LongitudeData = obj.agent.start_lon;
+
+            obj.markers3D{1}.LatitudeData = obj.agent.start_lat;
+            obj.markers3D{1}.LongitudeData = obj.agent.start_lon;
+        end
+
+        function UpdateAgentGoal(obj, ~, ~)
+            %UPDATEAGENTSTARTANDGOAL Update markers for agent goal
+
+            obj.markers2D{2}.LatitudeData = obj.agent.goal_lat;
+            obj.markers2D{2}.LongitudeData = obj.agent.goal_lon;
+
+            obj.markers3D{2}.LatitudeData = obj.agent.goal_lat;
+            obj.markers3D{2}.LongitudeData = obj.agent.goal_lon;
+        end
+
+        function UpdateAgentTrajectory(obj, ~, ~)
+            %UPDATEAGENTTRAJECTORY Update plots/markers of agent trajectory and current position
+
             obj.trajectory2D.LatitudeData = obj.agent.trajectory_lat;
             obj.trajectory2D.LongitudeData = obj.agent.trajectory_lon;
+            obj.markers2D{3}.LatitudeData = obj.agent.trajectory_lat(end);
+            obj.markers2D{3}.LongitudeData = obj.agent.trajectory_lon(end);
+
             obj.trajectory3D.LatitudeData = obj.agent.trajectory_lat;
             obj.trajectory3D.LongitudeData = obj.agent.trajectory_lon;
+            obj.markers3D{3}.LatitudeData = obj.agent.trajectory_lat(end);
+            obj.markers3D{3}.LongitudeData = obj.agent.trajectory_lon(end);
 
-            % obj.Center3DOnAgent();
-        end
-
-        function Center3DOnAgent(obj)
-            %CENTER3DONAGENT Move the 3D camera to the latest agent position
-            campos(obj.g3D, obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end), 1e7);
+            % obj.Center3DCameraOnAgent();
         end
 
         % function SyncBaseMaps(obj, ~, event)
