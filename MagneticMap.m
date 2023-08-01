@@ -51,7 +51,7 @@ classdef MagneticMap < handle
         function InitializeApp(obj)
             %INITIALIZEAPP Initialize the multi-panel app with 2D and 3D maps
             
-            obj.app = uifigure(Position=[100 100 1200 600], WindowStyle="alwaysontop");  % laptop only
+            obj.app = uifigure(Position=[100 200 1200 600], WindowStyle="alwaysontop");  % laptop only
             % obj.app = uifigure(Position=[100 100 1600 800], WindowStyle="alwaysontop");  % monitor only
             % obj.app = uifigure(Position=[1920 265 1535 785]);  % dual monitors
             ug = uigridlayout(obj.app, [1,2]);
@@ -67,6 +67,7 @@ classdef MagneticMap < handle
             geolimits(obj.g2D, [-70, 70], [-180, 180]);  % aspect ratio constraints often override this
             
             obj.g3D = geoglobe(p2, Basemap=basemap, Terrain="none");  % Terrain="none" flattens terrain so it does not occlude contours and trajectories
+            campos(obj.g3D, 0, 0, 1e7);  % manually setting a camera position right away bypasses camera animation, speeding up initial plotting
             % g3D.Position = [0 0 1 1];
 
             hold(obj.g2D);
@@ -198,6 +199,8 @@ classdef MagneticMap < handle
             else
                 obj.trajectory3D.Marker = 'none';
             end
+
+            drawnow;  % force figures to update immediately
         end
 
         function Lock3DCamera(obj)
@@ -221,7 +224,9 @@ classdef MagneticMap < handle
             camheading(obj.g3D, heading);
             campitch(obj.g3D, pitch);
             camroll(obj.g3D, roll);
-            
+
+            drawnow;  % force figures to update immediately
+
             disp("3D camera locked until manually adjusted");
         end
 
@@ -234,6 +239,8 @@ classdef MagneticMap < handle
             camheading(obj.g3D, 0);
             campitch(obj.g3D, -90);
             camroll(obj.g3D, 0);
+
+            drawnow;  % force figures to update immediately
         end
 
         function SetAgentStartTo3DCamPos(obj)
@@ -258,6 +265,8 @@ classdef MagneticMap < handle
 
             obj.markers3D{1}.LatitudeData = obj.agent.start_lat;
             obj.markers3D{1}.LongitudeData = obj.agent.start_lon;
+
+            drawnow;  % force figures to update immediately
         end
 
         function UpdateAgentGoal(obj, ~, ~)
@@ -268,6 +277,8 @@ classdef MagneticMap < handle
 
             obj.markers3D{2}.LatitudeData = obj.agent.goal_lat;
             obj.markers3D{2}.LongitudeData = obj.agent.goal_lon;
+
+            drawnow;  % force figures to update immediately
         end
 
         function UpdateAgentTrajectory(obj, ~, ~)
@@ -284,6 +295,8 @@ classdef MagneticMap < handle
             obj.markers3D{3}.LongitudeData = obj.agent.trajectory_lon(end);
 
             % obj.Center3DCameraOnAgent();
+
+            drawnow;  % force figures to update immediately
         end
 
         function ProcessKeyPress(obj, ~, event)
