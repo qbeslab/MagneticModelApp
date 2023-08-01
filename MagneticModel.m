@@ -9,13 +9,10 @@ classdef MagneticModel < handle
         version
         decimal_year
         height
-        latitudes
-        longitudes
-        param_idxs
-        param_names
+        sample_latitudes
+        sample_longitudes
         samples
         contour_levels
-        contour_names
         contour_tables
     end
 
@@ -27,18 +24,14 @@ classdef MagneticModel < handle
             % obj.model_func = @igrfmagm; obj.version = 13;  % slower, greater temporal scope
             obj.decimal_year = decyear("2020-01-01");
             obj.height = 0;  % altitude in meters
-            obj.latitudes = -89.5:0.5:89.5;
-            obj.longitudes = -180:1:180;
 
-            obj.param_idxs = struct(X_NORTH=1, Y_EAST=2, Z_DOWN=3, H_HORIZ=4, D_DECL=5, I_INCL=6, F_TOTAL=7);
-            % obj.param_idxs = struct(I_INCL=1, F_TOTAL=2);
-            obj.param_names = fieldnames(obj.param_idxs);
+            obj.sample_latitudes = -89.5:0.5:89.5;
+            obj.sample_longitudes = -180:1:180;
 
             obj.contour_levels = struct( ...
                 I_INCL = -90:10:90, ... degrees
                 F_TOTAL = 0:2000:70000 ... nanotesla
                 );
-            obj.contour_names = fieldnames(obj.contour_levels);
 
             obj.PopulateSamples();
             obj.ComputeContours();
@@ -55,24 +48,26 @@ classdef MagneticModel < handle
 
         function PopulateSamples(obj)
             %POPULATESAMPLES Collect samples of magnetic field properties at all coords
-            for i = length(obj.latitudes):-1:1
-                for j = length(obj.longitudes):-1:1
-                    [X, Y, Z, H, D, I, F] = obj.EvaluateModel(obj.latitudes(i), obj.longitudes(j));
-                    results = [X, Y, Z, H, D, I, F];
-                    % results = [I, F];
-                    for k = 1:length(obj.param_names)
-                        param = obj.param_names{k};
-                        obj.samples.(param)(i, j) = results(k);
-                    end
+            for i = length(obj.sample_latitudes):-1:1
+                for j = length(obj.sample_longitudes):-1:1
+                    [X, Y, Z, H, D, I, F] = obj.EvaluateModel(obj.sample_latitudes(i), obj.sample_longitudes(j));
+                    obj.samples.('X_NORTH')(i, j) = X;
+                    obj.samples.('Y_EAST' )(i, j) = Y;
+                    obj.samples.('Z_DOWN' )(i, j) = Z;
+                    obj.samples.('H_HORIZ')(i, j) = H;
+                    obj.samples.('D_DECL' )(i, j) = D;
+                    obj.samples.('I_INCL' )(i, j) = I;
+                    obj.samples.('F_TOTAL')(i, j) = F;
                 end
             end
         end
 
         function ComputeContours(obj)
             %COMPUTECONTOURS Compute magnetic field property contours
-            for i = 1:length(obj.contour_names)
-                param = obj.contour_names{i};
-                contour_matrix = contourc(obj.longitudes, obj.latitudes, obj.samples.(param), obj.contour_levels.(param)); 
+            contour_names = fieldnames(obj.contour_levels);
+            for i = 1:length(contour_names)
+                param = contour_names{i};
+                contour_matrix = contourc(obj.sample_longitudes, obj.sample_latitudes, obj.samples.(param), obj.contour_levels.(param)); 
                 obj.contour_tables.(param) = getContourLineCoordinates(contour_matrix);
             end
         end
