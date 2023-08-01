@@ -41,7 +41,7 @@ classdef Agent < handle
             obj.start_lat = lat;
             obj.start_lon = lon;
 
-            [~, ~, ~, I, F] = obj.magmodel.EvaluateModel(obj.start_lat, obj.start_lon);
+            [~, ~, ~, ~, ~, I, F] = obj.magmodel.EvaluateModel(obj.start_lat, obj.start_lon);
             obj.start_I_INCL = I;
             obj.start_F_TOTAL = F;
 
@@ -57,7 +57,7 @@ classdef Agent < handle
             obj.goal_lat = lat;
             obj.goal_lon = lon;
 
-            [~, ~, ~, I, F] = obj.magmodel.EvaluateModel(obj.goal_lat, obj.goal_lon);
+            [~, ~, ~, ~, ~, I, F] = obj.magmodel.EvaluateModel(obj.goal_lat, obj.goal_lon);
             obj.goal_I_INCL = I;
             obj.goal_F_TOTAL = F;
 
@@ -100,7 +100,7 @@ classdef Agent < handle
                 obj.trajectory_lon = [obj.trajectory_lon; new_lon];
                 % [obj.trajectory_lat, obj.trajectory_lon] = interpm(obj.trajectory_lat, obj.trajectory_lon, 1, 'gc');
     
-                [~, ~, ~, I, F] = obj.magmodel.EvaluateModel(new_lat, new_lon);
+                [~, ~, ~, ~, ~, I, F] = obj.magmodel.EvaluateModel(new_lat, new_lon);
                 obj.current_I_INCL = I;
                 obj.current_F_TOTAL = F;
             end

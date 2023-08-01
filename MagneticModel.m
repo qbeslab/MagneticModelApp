@@ -44,18 +44,21 @@ classdef MagneticModel < handle
             obj.ComputeContours();
         end
 
-        function [XYZ, H, D, I, F] = EvaluateModel(obj, lat, lon)
+        function [X, Y, Z, H, D, I, F] = EvaluateModel(obj, lat, lon)
             %EVALUATEMODEL Evaluate the magnetic field at given coords
             %   Outputs in nanotesla and degrees
             [XYZ, H, D, I, F] = obj.model_func(obj.height, lat, lon, obj.decimal_year, obj.version);
+            X = XYZ(1);
+            Y = XYZ(2);
+            Z = XYZ(3);
         end
 
         function PopulateSamples(obj)
             %POPULATESAMPLES Collect samples of magnetic field properties at all coords
             for i = length(obj.latitudes):-1:1
                 for j = length(obj.longitudes):-1:1
-                    [XYZ, H, D, I, F] = obj.EvaluateModel(obj.latitudes(i), obj.longitudes(j));
-                    results = [reshape(XYZ, 1, 3), H, D, I, F];
+                    [X, Y, Z, H, D, I, F] = obj.EvaluateModel(obj.latitudes(i), obj.longitudes(j));
+                    results = [X, Y, Z, H, D, I, F];
                     % results = [I, F];
                     for k = 1:length(obj.param_names)
                         param = obj.param_names{k};
