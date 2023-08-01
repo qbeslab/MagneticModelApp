@@ -40,6 +40,8 @@ classdef MagneticMap < handle
 
         function delete(obj)
             %DELETE Clean up app when this object is deleted
+            %   TODO this stops working when key/mouse press listeners are
+            %   active
             if class(obj.app) == "matlab.ui.Figure" && isvalid(obj.app)
                 % "close all" does not work on uifigure app windows
                 close(obj.app);
@@ -67,6 +69,9 @@ classdef MagneticMap < handle
             obj.g3D = geoglobe(p2, Basemap=basemap, Terrain="none");  % Terrain="none" flattens terrain so it does not occlude contours and trajectories
             % g3D.Position = [0 0 1 1];
 
+            hold(obj.g2D);
+            hold(obj.g3D);
+
             % % add basemap picker to 2D map, and ensure changing either basemap updates both
             % %    TODO adding these listeners tends to make the delete
             % %    method's attempt to close the app fail
@@ -74,8 +79,10 @@ classdef MagneticMap < handle
             % addlistener(obj.g2D, 'Basemap', 'PostSet', @obj.SyncBaseMaps);
             % addlistener(obj.g3D, 'Basemap', 'PostSet', @obj.SyncBaseMaps);
 
-            hold(obj.g2D);
-            hold(obj.g3D);
+            % add keyboard shortcuts
+            %    TODO auto closing of the app stops working when key/mouse
+            %    press listeners are active
+            obj.app.KeyPressFcn = @obj.ProcessKeyPress;
         end
 
         function AddContourPlots(obj)
@@ -214,6 +221,8 @@ classdef MagneticMap < handle
             camheading(obj.g3D, heading);
             campitch(obj.g3D, pitch);
             camroll(obj.g3D, roll);
+            
+            disp("3D camera locked until manually adjusted");
         end
 
         function Center3DCameraOnAgent(obj, height)
@@ -275,6 +284,34 @@ classdef MagneticMap < handle
             obj.markers3D{3}.LongitudeData = obj.agent.trajectory_lon(end);
 
             % obj.Center3DCameraOnAgent();
+        end
+
+        function ProcessKeyPress(obj, ~, event)
+            %PROCESSKEYPRESS Process keyboard shortcuts
+            switch event.Key
+                case 'c'
+                    obj.Center3DCameraOnAgent();
+                case 'g'
+                    obj.SetAgentGoalTo3DCamPos();
+                case 'l'
+                    obj.Lock3DCamera();
+                case 'm'
+                    obj.ToggleAgentTrajectoryMarkers();
+                case 'r'
+                    obj.agent.Reset();
+                case 's'
+                    obj.SetAgentStartTo3DCamPos();
+                case '1'
+                    obj.agent.Step(1);
+                case '2'
+                    obj.agent.Step(10);
+                case '3'
+                    obj.agent.Step(100);
+                case '4'
+                    obj.agent.Step(1000);
+                case '5'
+                    obj.agent.Step(10000);
+            end
         end
 
         % function SyncBaseMaps(obj, ~, event)
