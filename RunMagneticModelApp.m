@@ -8,6 +8,14 @@
 close all;
 clear;
 
-magmodel = MagneticModel();
+load_from_file = true;
+if load_from_file && exist("magmodel.mat", "file")
+    load("magmodel.mat");
+else
+    magmodel = MagneticModel();
+    save("magmodel.mat", "magmodel");
+end
+
 agent = Agent(magmodel);
+
 magmap = MagneticMap(magmodel, agent);
