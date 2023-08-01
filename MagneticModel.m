@@ -2,6 +2,7 @@ classdef MagneticModel < handle
     %MAGNETICMODEL Class for storing magnetic model samples
     % Required add-ons (use MATLAB's Add-On Explorer to install):
     %   - Aerospace Toolbox
+    %   - getContourLineCoordinates (from MathWorks File Exchange)
 
     properties
         model_func
@@ -13,6 +14,9 @@ classdef MagneticModel < handle
         param_idxs
         param_names
         samples
+        contour_levels
+        contour_names
+        contour_tables
     end
 
     methods
@@ -30,7 +34,14 @@ classdef MagneticModel < handle
             % obj.param_idxs = struct(I_INCL=1, F_TOTAL=2);
             obj.param_names = fieldnames(obj.param_idxs);
 
+            obj.contour_levels = struct( ...
+                I_INCL = -90:10:90, ... degrees
+                F_TOTAL = 0:2000:70000 ... nanotesla
+                );
+            obj.contour_names = fieldnames(obj.contour_levels);
+
             obj.PopulateSamples();
+            obj.ComputeContours();
         end
 
         function [XYZ, H, D, I, F] = EvaluateModel(obj, lat, lon)
@@ -40,16 +51,26 @@ classdef MagneticModel < handle
         end
 
         function PopulateSamples(obj)
-            %POPULATESAMPLES Fill samples property with values at all coords
+            %POPULATESAMPLES Collect samples of magnetic field properties at all coords
             for i = length(obj.latitudes):-1:1
                 for j = length(obj.longitudes):-1:1
                     [XYZ, H, D, I, F] = obj.EvaluateModel(obj.latitudes(i), obj.longitudes(j));
                     results = [reshape(XYZ, 1, 3), H, D, I, F];
                     % results = [I, F];
                     for k = 1:length(obj.param_names)
-                        obj.samples.(obj.param_names{k})(i, j) = results(k);
+                        param = obj.param_names{k};
+                        obj.samples.(param)(i, j) = results(k);
                     end
                 end
+            end
+        end
+
+        function ComputeContours(obj)
+            %COMPUTECONTOURS Compute magnetic field property contours
+            for i = 1:length(obj.contour_names)
+                param = obj.contour_names{i};
+                contour_matrix = contourc(obj.longitudes, obj.latitudes, obj.samples.(param), obj.contour_levels.(param)); 
+                obj.contour_tables.(param) = getContourLineCoordinates(contour_matrix);
             end
         end
     end

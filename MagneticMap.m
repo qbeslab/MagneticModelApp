@@ -2,15 +2,12 @@ classdef MagneticMap < handle
     %MAGNETICMAP Class for managing an app with 2D and 3D magnetic maps
     % Required add-ons (use MATLAB's Add-On Explorer to install):
     %   - Mapping Toolbox
-    %   - getContourLineCoordinates (from MathWorks File Exchange)
     % Optional add-ons (use MATLAB's Add-On Explorer to install):
     %   - MATLAB Basemap Data - colorterrain (install for offline use)
     
     properties
         magmodel
         agent
-        contour_levels
-        contour_tables
         app
         g2D
         g3D
@@ -25,12 +22,7 @@ classdef MagneticMap < handle
             %MAGNETICMAP Construct an instance of this class
 
             obj.magmodel = magmodel;
-            obj.contour_levels = struct( ...
-                I_INCL = -90:10:90, ... degrees
-                F_TOTAL = 0:2000:70000 ... nanotesla
-                );
 
-            obj.ComputeContours(magmodel);
             obj.InitializeApp();
             obj.AddContourPlots();
             obj.AddAgent(agent);
@@ -51,14 +43,6 @@ classdef MagneticMap < handle
             if class(obj.app) == "matlab.ui.Figure" && isvalid(obj.app)
                 % "close all" does not work on uifigure app windows
                 close(obj.app);
-            end
-        end
-        
-        function ComputeContours(obj, magmodel)
-            %COMPUTECONTOURS Compute the magnetic field property contours
-            for param_string = ["I_INCL", "F_TOTAL"]
-                contour_matrix = contourc(magmodel.longitudes, magmodel.latitudes, magmodel.samples.(param_string), obj.contour_levels.(param_string)); 
-                obj.contour_tables.(param_string) = getContourLineCoordinates(contour_matrix);
             end
         end
 
@@ -101,8 +85,8 @@ classdef MagneticMap < handle
             interpm_maxdiff = nan;  % degrees (or nan to skip contour interpolation)
 
             % add contours
-            for param_string = ["I_INCL", "F_TOTAL"]
-                contour_table = obj.contour_tables.(param_string);
+            for param = ["I_INCL", "F_TOTAL"]
+                contour_table = obj.magmodel.contour_tables.(param);
                 nContours = max(contour_table.Group);
 
                 % plot each contour level one at a time
@@ -112,7 +96,7 @@ classdef MagneticMap < handle
 
                     % set line width
                     linewidth = 0.5;  % default
-                    switch param_string
+                    switch param
                         case "I_INCL"
                             if level == 0
                                 linewidth = 3;  % magnetic equator
@@ -129,7 +113,7 @@ classdef MagneticMap < handle
 
                     % set color
                     color = 'k';  % default
-                    switch param_string
+                    switch param
                         case "I_INCL"
                             % color = "#02B187";  % green from Taylor (2018)
                             color = "#EEEEEE";  % light gray
