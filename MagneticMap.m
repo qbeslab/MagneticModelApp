@@ -52,7 +52,7 @@ classdef MagneticMap < handle
             %INITIALIZEAPP Initialize the multi-panel app with 2D and 3D maps
             
             obj.app = uifigure(Position=[100 200 1200 600], WindowStyle="alwaysontop");  % laptop only
-            % obj.app = uifigure(Position=[100 100 1600 800], WindowStyle="alwaysontop");  % monitor only
+            % obj.app = uifigure(Position=[100 200 1600 800], WindowStyle="alwaysontop");  % monitor only
             % obj.app = uifigure(Position=[1920 265 1535 785]);  % dual monitors
             ug = uigridlayout(obj.app, [1,2]);
             p1 = uipanel(ug, Title="2D");
@@ -106,11 +106,11 @@ classdef MagneticMap < handle
                     linewidth = 0.5;  % default
                     switch param
                         case "I_INCL"
-                            if level == 0
-                                linewidth = 3;  % magnetic equator
+                            if mod(level, 30) == 0
+                                linewidth = 3;  % multiples of 30 degrees
                             else
-                                if mod(level, 30) == 0
-                                    linewidth = 2;  % multiples of 30 degrees
+                                if mod(level, 10) == 0
+                                    linewidth = 2;  % multiples of 10 degrees
                                 end
                             end
                         case "F_TOTAL"
@@ -125,6 +125,9 @@ classdef MagneticMap < handle
                         case "I_INCL"
                             % color = "#02B187";  % green from Taylor (2018)
                             color = "#EEEEEE";  % light gray
+                            if level == 0
+                                color = '#FF8080';  % light red, magnetic equator
+                            end
                         case "F_TOTAL"
                             % color = "#8212B4";  % purple from Taylor (2018)
                             color = "#444444";  % dark gray
