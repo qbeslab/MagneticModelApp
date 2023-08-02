@@ -34,7 +34,6 @@ classdef MagneticMap < handle
             % %    method's attempt to close the app fail
             % % obj.g2D.ButtonDownFcn = @obj.ReportEvent;
             % obj.g2D.ButtonDownFcn = @obj.PrintCoords2D;
-            % % obj.g2D.ButtonDownFcn = @obj.AskAgentToStep;
             % % obj.g3D.ButtonDownFcn = @obj.ReportEvent;  % TODO not working
         end
 
@@ -373,10 +372,6 @@ classdef MagneticMap < handle
         % 
         %     % [lat, lon] = inputm;  % TODO not working
         %     % disp(['Latitude: ', char(string(lat)), '  Longitude: ', char(string(lon))]);
-        % end
-        %
-        % function AskAgentToStep(obj, ~, ~)
-        %     obj.agent.Step();
         % end
     end
 end
