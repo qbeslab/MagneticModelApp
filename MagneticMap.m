@@ -72,12 +72,12 @@ classdef MagneticMap < handle
             hold(obj.g2D);
             hold(obj.g3D);
 
-            % % add basemap picker to 2D map, and ensure changing either basemap updates both
-            % %    TODO adding these listeners tends to make the delete
-            % %    method's attempt to close the app fail
-            % addToolbarMapButton(axtoolbar(obj.g2D, "default"));
-            % addlistener(obj.g2D, 'Basemap', 'PostSet', @obj.SyncBaseMaps);
-            % addlistener(obj.g3D, 'Basemap', 'PostSet', @obj.SyncBaseMaps);
+            % add basemap picker to 2D map, and ensure changing either basemap updates both
+            %    TODO adding these listeners tends to make the delete
+            %    method's attempt to close the app fail
+            addToolbarMapButton(axtoolbar(obj.g2D, "default"));
+            addlistener(obj.g2D, 'Basemap', 'PostSet', @obj.SyncBaseMaps);
+            addlistener(obj.g3D, 'Basemap', 'PostSet', @obj.SyncBaseMaps);
 
             % add keyboard shortcuts
             %    TODO auto closing of the app stops working when key/mouse
@@ -350,15 +350,16 @@ classdef MagneticMap < handle
             end
         end
 
-        % function SyncBaseMaps(obj, ~, event)
-        %     %SYNCBASEMAPS Update the 2D and 3D basemaps to be the same
-        %     if event.AffectedObject == obj.g2D
-        %         geobasemap(obj.g3D, obj.g2D.Basemap);
-        %     else
-        %         geobasemap(obj.g2D, obj.g3D.Basemap);
-        %     end
-        % end
-        % 
+        function SyncBaseMaps(obj, ~, event)
+            %SYNCBASEMAPS Update the 2D and 3D basemaps to be the same
+            if event.AffectedObject == obj.g2D
+                geobasemap(obj.g3D, obj.g2D.Basemap);
+            else
+                geobasemap(obj.g2D, obj.g3D.Basemap);
+            end
+            drawnow;  % force figures to update immediately
+        end
+
         % function ReportEvent(~, src, event)
         %     disp(src);
         %     disp(event);
