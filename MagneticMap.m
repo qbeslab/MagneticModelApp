@@ -141,15 +141,36 @@ classdef MagneticMap < handle
                         [contour_lat, contour_lon] = interpm(contour_lat, contour_lon, interpm_maxdiff, 'gc');
                     end
 
+                    % prepare data tooltips and other metadata
+                    %   note: lines can be accessed later via tags, e.g., findobj(obj.g2D, "Tag", "I_INCL = 0")
+                    tag = [char(string(param)), ' = ', char(string(level))];
+                    datatipvalues = level*ones(size(contour_lat));
+                    datatiplabel = param.replace('_', '\_');  % default
+                    datatipformat = 'auto';  % default
+                    switch param
+                        case "I_INCL"
+                            datatiplabel = "Inclination";
+                            datatipformat = 'degrees';
+                        case "F_TOTAL"
+                            datatiplabel = "Intensity";
+                            datatipformat = '%g nT';
+                    end
+
                     % plot 2D contour line
-                    geoplot(obj.g2D, ...
+                    line = geoplot(obj.g2D, ...
                         contour_lat, contour_lon, ...
-                        '-', LineWidth=linewidth, Color=color);
+                        '-', LineWidth=linewidth, Color=color, ...
+                        Tag=tag, UserData=datatipvalues ...
+                        );
+                    line.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow(datatiplabel, 'UserData', datatipformat);
 
                     % plot 3D contour line
+                    %   note: 3D globe does not use data tooltips
                     geoplot3(obj.g3D, ...
                         contour_lat, contour_lon, [], ...
-                        '-', LineWidth=linewidth, Color=color);
+                        '-', LineWidth=linewidth, Color=color, ...
+                        Tag=tag, UserData=datatipvalues ...
+                        );
                 end
             end
         end
