@@ -183,10 +183,12 @@ classdef MagneticMap < handle
             color = "magenta";
             
             % plot 2D trajectory
-            %    TODO this breaks if the trajectory wraps across the
-            %    east/west edges of the map
+            %   2D coords are wrapped here since otherwise the 2D plot
+            %   would draw the trajectory off screen when longitude is
+            %   outside [-180, 180] (3D plot does not need this correction)
+            [new_lat, new_lon] = obj.Wrap2DTrajectoryAroundLon180(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
             obj.trajectory2D = geoplot(obj.g2D, ...
-                obj.agent.trajectory_lat, obj.agent.trajectory_lon, ...
+                new_lat, new_lon, ...
                 '-', LineWidth=linewidth, Color=color, Marker='none', MarkerSize=2);
 
             % plot 3D trajectory
@@ -194,12 +196,12 @@ classdef MagneticMap < handle
                 obj.agent.trajectory_lat, obj.agent.trajectory_lon, [], ...
                 '-', LineWidth=linewidth, Color=color, Marker='none', MarkerSize=2);
 
-            % plot 2D markers for agent start and goal
+            % plot 2D markers for agent start, goal, and current position
             obj.markers2D{1} = geoplot(obj.g2D, obj.agent.start_lat, obj.agent.start_lon, 'bo', MarkerSize=8, LineWidth=2);
             obj.markers2D{2} = geoplot(obj.g2D, obj.agent.goal_lat, obj.agent.goal_lon, 'go', MarkerSize=8, LineWidth=2);
-            obj.markers2D{3} = geoplot(obj.g2D, obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end), 'mo', MarkerSize=8, LineWidth=2);
+            obj.markers2D{3} = geoplot(obj.g2D, obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'mo', MarkerSize=8, LineWidth=2);
 
-            % plot 3D markers for agent start and goal
+            % plot 3D markers for agent start, goal, and current position
             obj.markers3D{1} = geoplot3(obj.g3D, obj.agent.start_lat, obj.agent.start_lon, [], 'bo', MarkerSize=8, LineWidth=2);
             obj.markers3D{2} = geoplot3(obj.g3D, obj.agent.goal_lat, obj.agent.goal_lon, [], 'go', MarkerSize=8, LineWidth=2);
             obj.markers3D{3} = geoplot3(obj.g3D, obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end), [], 'mo', MarkerSize=8, LineWidth=2);
@@ -258,7 +260,7 @@ classdef MagneticMap < handle
             if nargin < 2
                 height = 7e6;  % meters above reference ellipsoid
             end
-            campos(obj.g3D, obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end), height);
+            campos(obj.g3D, obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), height);
             camheading(obj.g3D, 0);
             campitch(obj.g3D, -90);
             camroll(obj.g3D, 0);
@@ -278,6 +280,19 @@ classdef MagneticMap < handle
             obj.Lock3DCamera;
             [lat, lon, ~] = campos(obj.g3D);
             obj.agent.SetGoal(lat, lon);
+        end
+
+        function [new_lat, new_lon] = Wrap2DTrajectoryAroundLon180(~, lat, lon)
+            %WRAP2DTRAJECTORYAROUNDLON180 Wrap longitude values to [-180, 180] and insert NaNs to prevent plotting jumps
+            new_lon = wrapTo180(lon);
+            new_lat = lat;
+            jumps = find(abs(diff(new_lon)) > 350);
+            if ~isempty(jumps)
+                for i = reshape(jumps(end:-1:1), 1, [])
+                    new_lon = [new_lon(1:i); nan; new_lon(i+1:end)];
+                    new_lat = [new_lat(1:i); nan; new_lat(i+1:end)];
+                end
+            end
         end
 
         function UpdateAgentStart(obj, ~, ~)
@@ -307,10 +322,14 @@ classdef MagneticMap < handle
         function UpdateAgentTrajectory(obj, ~, ~)
             %UPDATEAGENTTRAJECTORY Update plots/markers of agent trajectory and current position
 
-            obj.trajectory2D.LatitudeData = obj.agent.trajectory_lat;
-            obj.trajectory2D.LongitudeData = obj.agent.trajectory_lon;
-            obj.markers2D{3}.LatitudeData = obj.agent.trajectory_lat(end);
-            obj.markers2D{3}.LongitudeData = obj.agent.trajectory_lon(end);
+            % 2D coords are wrapped here since otherwise the 2D plot
+            % would draw the trajectory off screen when longitude is
+            % outside [-180, 180] (3D plot does not need this correction)
+            [new_lat, new_lon] = obj.Wrap2DTrajectoryAroundLon180(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
+            obj.trajectory2D.LatitudeData = new_lat;
+            obj.trajectory2D.LongitudeData = new_lon;
+            obj.markers2D{3}.LatitudeData = new_lat(end);
+            obj.markers2D{3}.LongitudeData = new_lon(end);
 
             obj.trajectory3D.LatitudeData = obj.agent.trajectory_lat;
             obj.trajectory3D.LongitudeData = obj.agent.trajectory_lon;
