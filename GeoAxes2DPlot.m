@@ -169,7 +169,7 @@ classdef GeoAxes2DPlot < handle
         end
 
         function UpdateAgentStart(obj, ~, ~)
-            %UPDATEAGENTSTARTANDGOAL Update marker for agent start
+            %UPDATEAGENTSTART Update marker for agent start
 
             obj.markers(1).LatitudeData = obj.agent.start_lat;
             obj.markers(1).LongitudeData = obj.agent.start_lon;
@@ -178,7 +178,7 @@ classdef GeoAxes2DPlot < handle
         end
 
         function UpdateAgentGoal(obj, ~, ~)
-            %UPDATEAGENTSTARTANDGOAL Update marker for agent goal
+            %UPDATEAGENTGOAL Update marker for agent goal
 
             obj.markers(2).LatitudeData = obj.agent.goal_lat;
             obj.markers(2).LongitudeData = obj.agent.goal_lon;
