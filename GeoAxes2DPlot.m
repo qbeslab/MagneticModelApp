@@ -10,7 +10,9 @@ classdef GeoAxes2DPlot < handle
         agent Agent
         ax matlab.graphics.axis.GeographicAxes
         trajectory matlab.graphics.chart.primitive.Line
-        markers (3,1) matlab.graphics.chart.primitive.Line
+        start matlab.graphics.chart.primitive.Line
+        goal matlab.graphics.chart.primitive.Line
+        position matlab.graphics.chart.primitive.Line
     end
     
     methods
@@ -134,9 +136,9 @@ classdef GeoAxes2DPlot < handle
                 '-', LineWidth=linewidth, Color=color, Marker='none', MarkerSize=2);
 
             % plot markers for agent start, goal, and current position
-            obj.markers(1) = geoplot(obj.ax, obj.agent.start_lat, obj.agent.start_lon, 'bo', MarkerSize=8, LineWidth=2);
-            obj.markers(2) = geoplot(obj.ax, obj.agent.goal_lat, obj.agent.goal_lon, 'go', MarkerSize=8, LineWidth=2);
-            obj.markers(3) = geoplot(obj.ax, obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'mo', MarkerSize=8, LineWidth=2);
+            obj.start = geoplot(obj.ax, obj.agent.start_lat, obj.agent.start_lon, 'bo', MarkerSize=8, LineWidth=2);
+            obj.goal = geoplot(obj.ax, obj.agent.goal_lat, obj.agent.goal_lon, 'go', MarkerSize=8, LineWidth=2);
+            obj.position = geoplot(obj.ax, obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'mo', MarkerSize=8, LineWidth=2);
 
             % update plots when agent changes
             addlistener(obj.agent, 'StartChanged', @obj.UpdateAgentStart);
@@ -171,8 +173,8 @@ classdef GeoAxes2DPlot < handle
         function UpdateAgentStart(obj, ~, ~)
             %UPDATEAGENTSTART Update marker for agent start
 
-            obj.markers(1).LatitudeData = obj.agent.start_lat;
-            obj.markers(1).LongitudeData = obj.agent.start_lon;
+            obj.start.LatitudeData = obj.agent.start_lat;
+            obj.start.LongitudeData = obj.agent.start_lon;
 
             drawnow;  % force figure to update immediately
         end
@@ -180,8 +182,8 @@ classdef GeoAxes2DPlot < handle
         function UpdateAgentGoal(obj, ~, ~)
             %UPDATEAGENTGOAL Update marker for agent goal
 
-            obj.markers(2).LatitudeData = obj.agent.goal_lat;
-            obj.markers(2).LongitudeData = obj.agent.goal_lon;
+            obj.goal.LatitudeData = obj.agent.goal_lat;
+            obj.goal.LongitudeData = obj.agent.goal_lon;
 
             drawnow;  % force figure to update immediately
         end
@@ -195,8 +197,8 @@ classdef GeoAxes2DPlot < handle
             [new_lat, new_lon] = obj.Wrap2DTrajectoryAroundLon180(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
             obj.trajectory.LatitudeData = new_lat;
             obj.trajectory.LongitudeData = new_lon;
-            obj.markers(3).LatitudeData = new_lat(end);
-            obj.markers(3).LongitudeData = new_lon(end);
+            obj.position.LatitudeData = new_lat(end);
+            obj.position.LongitudeData = new_lon(end);
 
             drawnow;  % force figure to update immediately
         end
