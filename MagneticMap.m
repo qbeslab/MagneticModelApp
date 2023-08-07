@@ -6,11 +6,11 @@ classdef MagneticMap < handle
     %   - MATLAB Basemap Data - colorterrain (install for offline use)
     
     properties
-        magmodel
-        agent
-        app
-        g2D
-        g3D
+        magmodel MagneticModel
+        agent Agent
+        app matlab.ui.Figure
+        g2D GeoAxes2DPlot
+        g3D GeoGlobe3DPlot
     end
     
     methods

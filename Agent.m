@@ -4,19 +4,19 @@ classdef Agent < handle
     %   - Mapping Toolbox
 
     properties
-        magmodel
-        start_lat
-        start_lon
-        goal_lat
-        goal_lon
-        trajectory_lat
-        trajectory_lon
-        start_I_INCL
-        start_F_TOTAL
-        goal_I_INCL
-        goal_F_TOTAL
-        current_I_INCL
-        current_F_TOTAL
+        magmodel MagneticModel
+        start_lat double
+        start_lon double
+        goal_lat double
+        goal_lon double
+        trajectory_lat (:,1) double
+        trajectory_lon (:,1) double
+        start_I_INCL double
+        start_F_TOTAL double
+        goal_I_INCL double
+        goal_F_TOTAL double
+        current_I_INCL double
+        current_F_TOTAL double
     end
     
     events

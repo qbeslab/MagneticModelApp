@@ -6,11 +6,11 @@ classdef GeoGlobe3DPlot < handle
     %   - MATLAB Basemap Data - colorterrain (install for offline use)
     
     properties
-        magmodel
-        agent
-        ax
-        trajectory
-        markers
+        magmodel MagneticModel
+        agent Agent
+        ax globe.graphics.GeographicGlobe
+        trajectory map.graphics.primitive.Line
+        markers (3,1) map.graphics.primitive.Line
     end
     
     methods
@@ -124,9 +124,9 @@ classdef GeoGlobe3DPlot < handle
                 '-', LineWidth=linewidth, Color=color, Marker='none', MarkerSize=2);
 
             % plot markers for agent start, goal, and current position
-            obj.markers{1} = geoplot3(obj.ax, obj.agent.start_lat, obj.agent.start_lon, [], 'bo', MarkerSize=8, LineWidth=2);
-            obj.markers{2} = geoplot3(obj.ax, obj.agent.goal_lat, obj.agent.goal_lon, [], 'go', MarkerSize=8, LineWidth=2);
-            obj.markers{3} = geoplot3(obj.ax, obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end), [], 'mo', MarkerSize=8, LineWidth=2);
+            obj.markers(1) = geoplot3(obj.ax, obj.agent.start_lat, obj.agent.start_lon, [], 'bo', MarkerSize=8, LineWidth=2);
+            obj.markers(2) = geoplot3(obj.ax, obj.agent.goal_lat, obj.agent.goal_lon, [], 'go', MarkerSize=8, LineWidth=2);
+            obj.markers(3) = geoplot3(obj.ax, obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end), [], 'mo', MarkerSize=8, LineWidth=2);
 
             % update plots when agent changes
             addlistener(obj.agent, 'StartChanged', @obj.UpdateAgentStart);
@@ -202,8 +202,8 @@ classdef GeoGlobe3DPlot < handle
         function UpdateAgentStart(obj, ~, ~)
             %UPDATEAGENTSTARTANDGOAL Update marker for agent start
 
-            obj.markers{1}.LatitudeData = obj.agent.start_lat;
-            obj.markers{1}.LongitudeData = obj.agent.start_lon;
+            obj.markers(1).LatitudeData = obj.agent.start_lat;
+            obj.markers(1).LongitudeData = obj.agent.start_lon;
 
             drawnow;  % force figure to update immediately
         end
@@ -211,8 +211,8 @@ classdef GeoGlobe3DPlot < handle
         function UpdateAgentGoal(obj, ~, ~)
             %UPDATEAGENTSTARTANDGOAL Update marker for agent goal
 
-            obj.markers{2}.LatitudeData = obj.agent.goal_lat;
-            obj.markers{2}.LongitudeData = obj.agent.goal_lon;
+            obj.markers(2).LatitudeData = obj.agent.goal_lat;
+            obj.markers(2).LongitudeData = obj.agent.goal_lon;
 
             drawnow;  % force figure to update immediately
         end
@@ -222,8 +222,8 @@ classdef GeoGlobe3DPlot < handle
 
             obj.trajectory.LatitudeData = obj.agent.trajectory_lat;
             obj.trajectory.LongitudeData = obj.agent.trajectory_lon;
-            obj.markers{3}.LatitudeData = obj.agent.trajectory_lat(end);
-            obj.markers{3}.LongitudeData = obj.agent.trajectory_lon(end);
+            obj.markers(3).LatitudeData = obj.agent.trajectory_lat(end);
+            obj.markers(3).LongitudeData = obj.agent.trajectory_lon(end);
 
             drawnow;  % force figure to update immediately
         end
