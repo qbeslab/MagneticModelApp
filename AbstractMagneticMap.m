@@ -134,6 +134,21 @@ classdef (Abstract) AbstractMagneticMap < handle
             obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'go', MarkerSize=8, LineWidth=2);
             obj.position = obj.AddLine(obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'mo', MarkerSize=8, LineWidth=2);
 
+            % add tooltips if the axes support them
+            if isprop(obj.start, "DataTipTemplate")
+                obj.start.DataTipTemplate.DataTipRows = [dataTipTextRow('START', ''); obj.start.DataTipTemplate.DataTipRows];
+                obj.start.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Inclination', @(~) obj.agent.start_I_INCL, 'degrees');
+                obj.start.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Intensity', @(~) obj.agent.start_F_TOTAL, '%g nT');
+
+                obj.goal.DataTipTemplate.DataTipRows = [dataTipTextRow('GOAL', ''); obj.goal.DataTipTemplate.DataTipRows];
+                obj.goal.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Inclination', @(~) obj.agent.goal_I_INCL, 'degrees');
+                obj.goal.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Intensity', @(~) obj.agent.goal_F_TOTAL, '%g nT');
+
+                obj.position.DataTipTemplate.DataTipRows = [dataTipTextRow('AGENT', ''); obj.position.DataTipTemplate.DataTipRows];
+                obj.position.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Inclination', @(~) obj.agent.current_I_INCL, 'degrees');
+                obj.position.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Intensity', @(~) obj.agent.current_F_TOTAL, '%g nT');
+            end
+
             % update plots when agent changes
             addlistener(obj.agent, 'StartChanged', @obj.UpdateAgentStart);
             addlistener(obj.agent, 'GoalChanged', @obj.UpdateAgentGoal);
