@@ -1,5 +1,5 @@
-classdef MagneticMap < handle
-    %MAGNETICMAP Class for managing an app with 2D and 3D magnetic maps
+classdef MagneticMapApp < handle
+    %MAGNETICMAPAPP Class for managing an app with 2D and 3D magnetic maps
     % Required add-ons (use MATLAB's Add-On Explorer to install):
     %   - Mapping Toolbox
     % Optional add-ons (use MATLAB's Add-On Explorer to install):
@@ -8,22 +8,22 @@ classdef MagneticMap < handle
     properties
         magmodel MagneticModel
         agent Agent
-        app matlab.ui.Figure
+        gui matlab.ui.Figure
         g2D GeoAxes2DPlot
         g3D GeoGlobe3DPlot
     end
     
     methods
-        function obj = MagneticMap(magmodel, agent)
+        function obj = MagneticMapApp(magmodel, agent)
             %MAGNETICMAP Construct an instance of this class
 
             obj.magmodel = magmodel;
             obj.agent = agent;
 
-            obj.app = uifigure(Position=[100 200 1200 600], WindowStyle="alwaysontop");  % laptop only
-            % obj.app = uifigure(Position=[100 200 1600 800], WindowStyle="alwaysontop");  % monitor only
-            % obj.app = uifigure(Position=[1920 265 1535 785]);  % dual monitors
-            ug = uigridlayout(obj.app, [1,2]);
+            obj.gui = uifigure(Position=[100 200 1200 600], WindowStyle="alwaysontop");  % laptop only
+            % obj.gui = uifigure(Position=[100 200 1600 800], WindowStyle="alwaysontop");  % monitor only
+            % obj.gui = uifigure(Position=[1920 265 1535 785]);  % dual monitors
+            ug = uigridlayout(obj.gui, [1,2]);
             p1 = uipanel(ug, Title="2D");
             p2 = uipanel(ug, Title="3D");
 
@@ -39,7 +39,7 @@ classdef MagneticMap < handle
             % add keyboard shortcuts
             %    TODO auto closing of the app stops working when key/mouse
             %    press listeners are active
-            obj.app.KeyPressFcn = @obj.ProcessKeyPress;
+            obj.gui.KeyPressFcn = @obj.ProcessKeyPress;
 
             % advance agent towards goal and then center the 3D camera
             obj.agent.Step(300);
@@ -57,9 +57,9 @@ classdef MagneticMap < handle
             %DELETE Clean up app when this object is deleted
             %   TODO this stops working when key/mouse press listeners are
             %   active
-            if class(obj.app) == "matlab.ui.Figure" && isvalid(obj.app)
+            if class(obj.gui) == "matlab.ui.Figure" && isvalid(obj.gui)
                 % "close all" does not work on uifigure app windows
-                close(obj.app);
+                close(obj.gui);
             end
         end
 

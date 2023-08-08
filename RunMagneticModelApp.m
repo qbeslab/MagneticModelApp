@@ -18,4 +18,4 @@ end
 
 agent = Agent(magmodel);
 
-magmap = MagneticMap(magmodel, agent);
+app = MagneticMapApp(magmodel, agent);
