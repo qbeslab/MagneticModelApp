@@ -1,13 +1,13 @@
-classdef GeoGlobe3DPlot < AbstractMagneticMap
-    %GEOGLOBE3DPLOT Class for managing a 3D GeographicGlobe plot of the magnetic environment
+classdef GeoGlobe3DMagneticMap < AbstractMagneticMap
+    %GEOGLOBE3DMAGNETICMAP Class for managing a 3D GeographicGlobe plot of the magnetic environment
     % Required add-ons (use MATLAB's Add-On Explorer to install):
     %   - Mapping Toolbox
     % Optional add-ons (use MATLAB's Add-On Explorer to install):
     %   - MATLAB Basemap Data - colorterrain (install for offline use)
     
     methods
-        function obj = GeoGlobe3DPlot(magmodel, agent, parent)
-            %GEOGLOBE3DPLOT Construct an instance of this class
+        function obj = GeoGlobe3DMagneticMap(magmodel, agent, parent)
+            %GEOGLOBE3DMAGNETICMAP Construct an instance of this class
             if nargin == 2
                 parent = uifigure;
             end

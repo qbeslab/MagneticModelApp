@@ -1,13 +1,13 @@
-classdef GeoAxes2DPlot < AbstractMagneticMap
-    %GEOAXES2DPLOT Class for managing a 2D GeographicAxes plot of the magnetic environment
+classdef GeoAxes2DMagneticMap < AbstractMagneticMap
+    %GEOAXES2DMAGNETICMAP Class for managing a 2D GeographicAxes plot of the magnetic environment
     % Required add-ons (use MATLAB's Add-On Explorer to install):
     %   - Mapping Toolbox
     % Optional add-ons (use MATLAB's Add-On Explorer to install):
     %   - MATLAB Basemap Data - colorterrain (install for offline use)
     
     methods
-        function obj = GeoAxes2DPlot(magmodel, agent, parent)
-            %GEOAXES2DPLOT Construct an instance of this class
+        function obj = GeoAxes2DMagneticMap(magmodel, agent, parent)
+            %GEOAXES2DMAGNETICMAP Construct an instance of this class
             if nargin == 2
                 parent = gcf;
             end
