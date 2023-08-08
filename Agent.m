@@ -78,7 +78,7 @@ classdef Agent < handle
 
             notify(obj, "TrajectoryChanged");
         end
-        
+
         function Step(obj, n)
             %STEP Take n steps (default 1) and append points to the trajectory
 
@@ -86,16 +86,13 @@ classdef Agent < handle
                 n = 1;
             end
 
-            for i = 1:n    
-                perceived_dir = [(obj.goal_I_INCL-obj.current_I_INCL); ...
-                                 (obj.goal_F_TOTAL-obj.current_F_TOTAL)/100];  % TODO scale properly
-                % disp(['perceived_dir: [', char(string(perceived_dir(1))), ', ', char(string(perceived_dir(2))), ']']);
-                perceived_dir = perceived_dir/norm(perceived_dir);  % TODO scale properly
+            for i = 1:n
+                perceived_dir = obj.ComputeDirection();
+                % disp(['perceived_dir: ', obj.ApproxDirectionString(perceived_dir), ' [', char(string(perceived_dir(1))), ', ', char(string(perceived_dir(2))), ']']);
     
-                % new_lat = obj.trajectory_lat(end) - 1;
-                % new_lon = obj.trajectory_lon(end) + 1;
-                new_lat = obj.trajectory_lat(end) + perceived_dir(1)/10;  % TODO scale properly
-                new_lon = obj.trajectory_lon(end) + perceived_dir(2)/10;  % TODO scale properly
+                speed = 1/10;  % TODO scale properly
+                new_lat = obj.trajectory_lat(end) + perceived_dir(1) * speed;
+                new_lon = obj.trajectory_lon(end) + perceived_dir(2) * speed;
     
                 obj.trajectory_lat = [obj.trajectory_lat; new_lat];
                 obj.trajectory_lon = [obj.trajectory_lon; new_lon];
@@ -107,6 +104,61 @@ classdef Agent < handle
             end
 
             notify(obj, "TrajectoryChanged");
+        end
+
+        function perceived_dir = ComputeDirection(obj, goal_I_INCL, goal_F_TOTAL, current_I_INCL, current_F_TOTAL)
+            %COMPUTEDIRECTION Calculate the perceived direction of the goal
+            if nargin == 1
+                goal_I_INCL = obj.goal_I_INCL;
+                goal_F_TOTAL = obj.goal_F_TOTAL;
+                current_I_INCL = obj.current_I_INCL;
+                current_F_TOTAL = obj.current_F_TOTAL;
+            end
+            perceived_dir = [(goal_I_INCL-current_I_INCL); ...
+                             (goal_F_TOTAL-current_F_TOTAL)/100];  % TODO scale properly
+            perceived_dir = perceived_dir/norm(perceived_dir);  % TODO scale properly
+        end
+
+        function dir_string = ApproxDirectionString(~, perceived_dir)
+            %APPROXDIRECTIONSTRING Convert a perceived direction vector to an approximate string representation
+            angle = atan2d(perceived_dir(1), perceived_dir(2));
+            angle = round(angle/22.5)*22.5;
+            switch angle
+                case 0
+                    dir_string = 'E';
+                case 22.5
+                    dir_string = 'ENE';
+                case 45
+                    dir_string = 'NE';
+                case 67.5
+                    dir_string = 'NNE';
+                case 90
+                    dir_string = 'N';
+                case 112.5
+                    dir_string = 'NNW';
+                case 135
+                    dir_string = 'NW';
+                case 157.5
+                    dir_string = 'WNW';
+                case 180
+                    dir_string = 'W';
+                case -180
+                    dir_string = 'W';
+                case -157.5
+                    dir_string = 'WSW';
+                case -135
+                    dir_string = 'SW';
+                case -112.5
+                    dir_string = 'SSW';
+                case -90
+                    dir_string = 'S';
+                case -67.5
+                    dir_string = 'SSE';
+                case -45
+                    dir_string = 'SE';
+                case -22.5
+                    dir_string = 'ESE';
+            end
         end
     end
 end
