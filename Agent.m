@@ -36,7 +36,12 @@ classdef Agent < handle
             % obj.SetStart(41.5015, -81.6072);  % Cleveland
             obj.SetStart(-5.2367, -35.4049);  % Brazil coast
             obj.SetGoal(-7.923, -14.407);  % Ascension Island
-            % obj.SetGoal(9, -80); % Panama
+            % obj.SetGoal(9, -80);  % Panama
+
+            % % spiral source
+            % obj.SetStart(15, -45);
+            % obj.SetGoal(16.25, -56.68);
+
             obj.Reset();
         end
 

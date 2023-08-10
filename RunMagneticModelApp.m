@@ -20,6 +20,6 @@ end
 
 agent = Agent(magmodel);
 
-Axesm2DMagneticMap;
-
 app = MagneticMapApp(magmodel, agent);
+
+Axesm2DMagneticMap;
