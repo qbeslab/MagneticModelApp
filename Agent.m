@@ -102,6 +102,10 @@ classdef Agent < handle
                 new_lon = obj.trajectory_lon(end) + perceived_dir(1) * obj.speed;
                 new_lat = obj.trajectory_lat(end) + perceived_dir(2) * obj.speed;
 
+                if abs(new_lat) > 90
+                    disp("aborting: crossed polar singularity");
+                    break
+                end
     
                 obj.trajectory_lat = [obj.trajectory_lat; new_lat];
                 obj.trajectory_lon = [obj.trajectory_lon; new_lon];
