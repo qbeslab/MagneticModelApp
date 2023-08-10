@@ -17,12 +17,15 @@ classdef Agent < handle
         goal_F_TOTAL double
         current_I_INCL double
         current_F_TOTAL double
+        A (2,2) double = [0, 1; 1, 0]  % TODO scale properly
+        speed double = 1/10  % TODO scale properly
     end
     
     events
         StartChanged
         GoalChanged
         TrajectoryChanged
+        NavigationChanged
     end
     
     methods
@@ -69,6 +72,12 @@ classdef Agent < handle
             notify(obj, "GoalChanged");
         end
 
+        function SetA(obj, A)
+            %SETA Set the matrix used for navigation
+            obj.A = A;
+            notify(obj, "NavigationChanged");
+        end
+
         function Reset(obj)
             %RESET Reset trajectory to initial conditions
             obj.trajectory_lat = obj.start_lat;
@@ -90,9 +99,9 @@ classdef Agent < handle
                 perceived_dir = obj.ComputeDirection();
                 % disp(['perceived_dir: ', obj.ApproxDirectionString(perceived_dir), ' [', char(string(perceived_dir(1))), ', ', char(string(perceived_dir(2))), ']']);
     
-                speed = 1/10;  % TODO scale properly
-                new_lat = obj.trajectory_lat(end) + perceived_dir(1) * speed;
-                new_lon = obj.trajectory_lon(end) + perceived_dir(2) * speed;
+                new_lon = obj.trajectory_lon(end) + perceived_dir(1) * obj.speed;
+                new_lat = obj.trajectory_lat(end) + perceived_dir(2) * obj.speed;
+
     
                 obj.trajectory_lat = [obj.trajectory_lat; new_lat];
                 obj.trajectory_lon = [obj.trajectory_lon; new_lon];
@@ -116,6 +125,7 @@ classdef Agent < handle
             end
             perceived_dir = [(goal_I_INCL-current_I_INCL); ...
                              (goal_F_TOTAL-current_F_TOTAL)/100];  % TODO scale properly
+            perceived_dir = obj.A * perceived_dir;
             perceived_dir = perceived_dir/norm(perceived_dir);  % TODO scale properly
         end
 
