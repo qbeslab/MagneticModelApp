@@ -31,8 +31,8 @@ classdef (Abstract) AbstractMagneticMap < handle
         function AddContourPlots(obj)
             %ADDCONTOURPLOTS Add magnetic property contours to map
 
-            % interpm_maxdiff = 0.1;  % degrees (or nan to skip contour interpolation)
-            interpm_maxdiff = nan;  % degrees (or nan to skip contour interpolation)
+            interpm_maxdiff = 1;  % degrees (or nan to skip contour interpolation)
+            % interpm_maxdiff = nan;  % degrees (or nan to skip contour interpolation)
 
             % add contours
             for param = ["I_INCL", "F_TOTAL"]
