@@ -9,6 +9,7 @@ classdef MagneticModel < handle
         version string
         decimal_year double
         height double
+        sample_resolution double
         sample_latitudes (:,1) double
         sample_longitudes (:,1) double
         samples struct
@@ -25,8 +26,16 @@ classdef MagneticModel < handle
             obj.decimal_year = decyear("2020-01-01");
             obj.height = 0;  % altitude in meters
 
-            obj.sample_latitudes = -89.5:0.5:89.5;
-            obj.sample_longitudes = -180:1:180;
+            % obj.sample_resolution = 8;  % very coarse
+            % obj.sample_resolution = 4;  % coarse
+            % obj.sample_resolution = 2;  % medium
+            obj.sample_resolution = 1;  % fine
+            % obj.sample_resolution = 0.5;  % very fine
+            % obj.sample_resolution = 0.25;  % ultra fine
+
+            obj.sample_latitudes = -90:obj.sample_resolution:90;
+            obj.sample_longitudes = -180:obj.sample_resolution:180;
+
             s = nan(length(obj.sample_latitudes), length(obj.sample_longitudes));
             % obj.samples = struct( ...
             %     X_NORTH=s, Y_EAST=s, Z_DOWN=s, ...
