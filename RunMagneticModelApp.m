@@ -8,8 +8,6 @@
 close all;
 clear;
 
-global magmodel agent;
-
 load_from_file = true;
 if load_from_file && exist("magmodel.mat", "file")
     load("magmodel.mat");
@@ -22,4 +20,4 @@ agent = Agent(magmodel);
 
 app = MagneticMapApp(magmodel, agent);
 
-Axesm2DMagneticMap;
+other = Axesm3DMagneticMap(magmodel, agent);

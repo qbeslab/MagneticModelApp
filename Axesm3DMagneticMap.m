@@ -1,0 +1,350 @@
+classdef Axesm3DMagneticMap < AbstractMagneticMap
+    %AXESM3DMAGNETICMAP Class for managing a 3D axesm-based plot of the magnetic environment
+    % Required add-ons (use MATLAB's Add-On Explorer to install):
+    %   - Mapping Toolbox
+
+    properties
+        projection
+        coastline_plot
+        R
+        lat
+        lon
+        dlatI
+        dlonI
+        dlatF
+        dlonF
+        orthogonality
+        stability
+        surface_mesh
+        surface_mesh_type
+        vector_field
+        vector_field_type
+    end
+    
+    methods
+        function obj = Axesm3DMagneticMap(magmodel, agent, parent)
+            %AXESM3DMAGNETICMAP Construct an instance of this class
+            if nargin == 2
+                parent = gcf;
+            end
+            obj@AbstractMagneticMap(magmodel, agent, parent);
+        end
+        
+        function InitializeAxes(obj, parent)
+            %INITIALIZEAXES Initialize 3D axesm-based map
+            obj.projection = "globe";
+            obj.ax = axesm( ...
+                MapProjection=obj.projection, ...
+                Frame='on' ...
+                ... Grid='on', ParallelLabel='on', MeridianLabel='on', ...
+                ... MapLatLimit=[-80 80] ...
+                );
+
+            % hold(obj.ax);
+
+            load("coastlines", "coastlat", "coastlon");
+            obj.coastline_plot = plotm(coastlat, coastlon, 'b');
+            obj.coastline_plot.Clipping = 'off';  % prevent map clipping when zoomed in
+            
+            % darken the background and hide some axes elements
+            parent.Color = 'k';
+            obj.ax.Clipping = 'off';
+            obj.ax.Visible = 'off';
+
+            % if obj.projection == "globe"
+            %     % move the camera to the agent
+            %     camtargm(agent.trajectory_lat(end), agent.trajectory_lon(end), 0);
+            %     camposm(agent.trajectory_lat(end), agent.trajectory_lon(end), 1);
+            % end
+
+            % move the camera to the origin
+            camtargm(0, 0, 0);
+            camposm(0, 0, 1);
+
+            obj.R = georefpostings([-90, 90], [-180, 180], obj.magmodel.sample_resolution, obj.magmodel.sample_resolution);
+            [obj.lat, obj.lon] = obj.R.geographicGrid();
+
+            [obj.dlonI, obj.dlatI] = gradient(obj.magmodel.samples.I_INCL);
+            [obj.dlonF, obj.dlatF] = gradient(obj.magmodel.samples.F_TOTAL);
+
+            % obj.SetMesh("terrain");
+            % obj.SetMesh("orthogonality");
+            obj.SetSurfaceMesh("stability");
+        end
+
+        function line = AddLine(~, lat, lon, linespec, varargin)
+            %ADDLINE Plot a line or markers on the map
+            line = plotm(lat, lon, linespec, varargin{:});
+            line.Clipping = 'off';  % TODO only needed if not 3D?
+        end
+
+        function [new_lat, new_lon] = CleanLatLon(~, lat, lon)
+            %CLEANLATLON No cleaning necessary on 3D plots, so do nothing
+            new_lat = lat;
+            new_lon = lon;
+        end
+
+        function UpdateAgentStart(obj, ~, ~)
+            %UPDATEAGENTSTART Update marker for agent start
+
+            delete(obj.start)  % clear existing start marker
+            obj.start = plotm(obj.agent.start_lat, obj.agent.start_lon, 'bo', MarkerSize=8, LineWidth=2);
+            obj.start.Clipping = 'off';  % TODO only needed if not 3D?
+
+            drawnow;  % force figure to update immediately
+        end
+
+        function UpdateAgentGoal(obj, ~, ~)
+            %UPDATEAGENTGOAL Update marker for agent goal
+
+            delete(obj.goal)  % clear existing goal marker
+            obj.goal = plotm(obj.agent.goal_lat, obj.agent.goal_lon, 'go', MarkerSize=8, LineWidth=2);
+            obj.goal.Clipping = 'off';  % TODO only needed if not 3D?
+
+            drawnow;  % force figure to update immediately
+        end
+
+        function UpdateAgentTrajectory(obj, ~, ~)
+            %UPDATEAGENTTRAJECTORY Update plots/markers of agent trajectory and current position
+
+            % coords are cleaned up here since otherwise the 2D plot would
+            % draw the trajectory off screen when longitude is outside
+            % [-180, 180] (3D plot does not need this correction)
+            [new_lat, new_lon] = obj.CleanLatLon(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
+
+            delete(obj.trajectory)  % clear existing trajectory
+            obj.trajectory = plotm(new_lat, new_lon, '-', LineWidth=2, Color='m', Marker='none', MarkerSize=2);
+            obj.trajectory.Clipping = 'off';  % TODO only needed if not 3D?
+
+            delete(obj.position)  % clear existing position marker
+            obj.position = plotm(new_lat(end), new_lon(end), 'mo', MarkerSize=8, LineWidth=2);
+            obj.position.Clipping = 'off';  % TODO only needed if not 3D?
+
+            drawnow;  % force figure to update immediately
+        end
+
+        function SetSurfaceMesh(obj, surface_mesh_type)
+            %SETSURFACEMESH ...
+
+            delete(obj.surface_mesh);
+            obj.surface_mesh_type = surface_mesh_type;
+            switch obj.surface_mesh_type
+                case "terrain"
+                    % plot an opaque terrain mesh
+                    load("topo60c.mat", "topo60c", "topo60cR");
+                    Z = zeros(obj.R.RasterSize);
+                    obj.surface_mesh(1) = meshm(Z, obj.R, FaceColor='w');  % first plot an opaque white mesh
+                    obj.surface_mesh(2) = geoshow(topo60c, topo60cR, DisplayType="texturemap", FaceAlpha=0.6);  % second plot the terrain mesh, made transparent to lighten the colors
+                    demcmap(topo60c);
+                    obj.coastline_plot.Color = 'b';
+            
+                case "orthogonality"
+                    % plot orthogonality as a color map
+                    obj.CalculateOrthogonality();
+                    obj.surface_mesh = meshm(obj.orthogonality, obj.R);
+                    colormap("default");
+                    clim("auto");
+                    obj.coastline_plot.Color = 'w';
+
+                case "stability"
+                    % plot goal stability as a color map
+                    obj.surface_mesh = obj.DrawStabilityMesh();
+                    addlistener(obj.agent, "GoalChanged", @obj.DrawStabilityMesh);
+                    addlistener(obj.agent, "NavigationChanged", @obj.DrawStabilityMesh);
+                    obj.coastline_plot.Color = 'b';
+            end
+        end
+
+        function SetVectorField(obj, vector_field_type)
+            %SETVECTORFIELD ...
+
+            obj.vector_field_type = vector_field_type;
+            switch obj.vector_field_type
+                case "none"
+                    % clear the vector field
+                    try
+                        delete(obj.vector_field);
+                    catch
+                        % do nothing if already deleted
+                    end
+
+                case "flow"
+                    % plot arrows showing the paths that the agent would take
+                    obj.DrawPerceivedDirectionVectorFieldPlot();
+                    addlistener(obj.agent, "GoalChanged", @obj.DrawPerceivedDirectionVectorFieldPlot);
+                    addlistener(obj.agent, "NavigationChanged", @obj.DrawPerceivedDirectionVectorFieldPlot);
+
+                case "gradients"
+                    % plot two sets of arrows showing the gradients of the inclination and intensity
+                    obj.DrawIFGradients();
+            end
+        end
+
+        function CalculateOrthogonality(obj)
+            %CALCULATEORTHOGONALITY ...
+            obj.orthogonality = nan(obj.R.RasterSize);
+            for i = 1:length(obj.magmodel.sample_latitudes)
+                for j = 1:length(obj.magmodel.sample_longitudes)
+                    dI = [obj.dlatI(i, j); obj.dlonI(i, j)];
+                    dF = [obj.dlatF(i, j); obj.dlonF(i, j)];
+                    angle = acosd(dot(dI, dF)/(norm(dI) * norm(dF)));
+                    if angle > 90
+                        % result will be between 0 and 90 degrees
+                        angle = 180 - angle;
+                    end
+                    obj.orthogonality(i, j) = angle;
+                end
+            end
+        end
+
+        function CalculateStability(obj)
+            %CALCULATESTABILITY ...
+
+            obj.stability = nan(obj.R.RasterSize);
+            for i = 1:length(obj.magmodel.sample_latitudes)
+                for j = 1:length(obj.magmodel.sample_longitudes)
+                    jacobian = -obj.agent.A * [obj.dlonI(i, j), obj.dlatI(i, j); obj.dlonF(i, j)/100, obj.dlatF(i, j)/100];  % divide dF by 100 because of agent's perceived direction scaling
+                    ev = eig(jacobian);
+                    evreal = real(ev);
+                    evimag = imag(ev);
+                    tol = 1e-10;
+                    is_unstable = evreal(1) > tol || evreal(2) > tol;
+                    is_neutrally_stable = abs(evreal(1)) < 0 && abs(evreal(2)) < 0;
+                    has_rotation = abs(evimag(1)) > tol || abs(evimag(2)) > tol;
+                    if is_unstable
+                        % at least one eigenvalue real-part is positive: unstable (repelling)
+                        if has_rotation
+                            % spiral source
+                            obj.stability(i,j) = 0.75;  % light green with summer colormap
+                        else
+                            % unstable node
+                            obj.stability(i, j) = 1;  % yellow with summer colormap
+                        end
+                    else
+                        % both eigenvalue real-parts are non-positive: stable (attracting) or neutrally stable
+                        if is_neutrally_stable
+                            % both eigenvalue real-parts are zero (or very close): neutrally stable
+                            obj.stability(i, j) = 0.5;
+                        else
+                            % both eigenvalue real-parts are positive: stable (attracting)
+                            if has_rotation
+                                % spiral sink
+                                obj.stability(i,j) = 0.25;  % medium green with summer colormap
+                            else
+                                % stable node
+                                obj.stability(i, j) = 0;  % dark green with summer colormap
+                            end
+                        end
+                    end
+                end
+            end
+        end
+
+        function surface_mesh = DrawStabilityMesh(obj, ~, ~)
+            %DRAWSTABILITYMESH ...
+
+            if obj.surface_mesh_type == "stability"
+                obj.CalculateStability();
+                surface_mesh = meshm(obj.stability, obj.R);
+                surface_mesh.Clipping = 'off';  % TODO only needed if not 3D?
+                colormap("summer");
+                clim("auto");
+                % if obj.projection ~= "globe"
+                %     alpha(surface_mesh, 0.3);
+                % end
+            end
+        end
+
+        function DrawPerceivedDirectionVectorFieldPlot(obj, ~, ~)
+            %...
+        
+            if obj.vector_field_type == "flow"
+                try
+                    delete(obj.vector_field);
+                catch
+                    % do nothing if already deleted
+                end
+
+                goal_I = obj.agent.goal_I_INCL;
+                goal_F = obj.agent.goal_F_TOTAL;
+            
+                dlat = nan(obj.R.RasterSize);
+                dlon = nan(obj.R.RasterSize);
+            
+                for i = 1:length(obj.magmodel.sample_latitudes)
+                    for j = 1:length(obj.magmodel.sample_longitudes)
+                        I = obj.magmodel.samples.I_INCL(i, j);
+                        F = obj.magmodel.samples.F_TOTAL(i, j);
+                        perceived_dir = obj.agent.ComputeDirection(goal_I, goal_F, I, F);
+                        dlon(i, j) = perceived_dir(1);
+                        dlat(i, j) = perceived_dir(2);
+                    end
+                end
+            
+                obj.vector_field = quiverm(obj.lat, obj.lon, dlat, dlon);
+                color = "#444444";
+                obj.vector_field(1).Color = color;
+                obj.vector_field(2).Color = color;
+                obj.vector_field(1).Clipping = 'off';  % prevent arrow clipping when zoomed in
+                obj.vector_field(2).Clipping = 'off';  % prevent arrow clipping when zoomed in
+            end
+        end
+
+        function DrawIFGradients(obj)
+            %...
+
+            if obj.vector_field_type == "gradients"
+                try
+                    delete(obj.vector_field);
+                catch
+                    % do nothing if already deleted
+                end
+
+                % draw inclination gradient
+                h = quiverm(obj.lat, obj.lon, obj.dlatI, obj.dlonI);
+                color = "#EEEEEE";
+                h(1).Color = color;
+                h(2).Color = color;
+                h(1).Clipping = 'off';  % prevent arrow clipping when zoomed in
+                h(2).Clipping = 'off';  % prevent arrow clipping when zoomed in
+                obj.vector_field(1) = h(1);
+                obj.vector_field(2) = h(2);
+    
+                % draw intensity gradient
+                h = quiverm(obj.lat, obj.lon, obj.dlatF, obj.dlonF);
+                color = "#444444";
+                h(1).Color = color;
+                h(2).Color = color;
+                h(1).Clipping = 'off';  % prevent arrow clipping when zoomed in
+                h(2).Clipping = 'off';  % prevent arrow clipping when zoomed in
+                obj.vector_field(3) = h(1);
+                obj.vector_field(4) = h(2);
+            end
+        end
+
+        % function q = DrawInclinationGradient(obj)
+        %     %...
+        % 
+        %     % delete(q)  % clear existing quiver plot
+        %     q = quiverm(obj.lat, obj.lon, obj.dlatI, obj.dlonI);
+        %     color = "#EEEEEE";
+        %     q(1).Color = color;
+        %     q(2).Color = color;
+        %     q(1).Clipping = 'off';  % prevent arrow clipping when zoomed in
+        %     q(2).Clipping = 'off';  % prevent arrow clipping when zoomed in
+        % end
+        % 
+        % function q = DrawIntensityGradient(obj)        
+        %     %...
+        % 
+        %     % delete(q)  % clear existing quiver plot
+        %     q = quiverm(obj.lat, obj.lon, obj.dlatF, obj.dlonF);
+        %     color = "#444444";
+        %     q(1).Color = color;
+        %     q(2).Color = color;
+        %     q(1).Clipping = 'off';  % prevent arrow clipping when zoomed in
+        %     q(2).Clipping = 'off';  % prevent arrow clipping when zoomed in
+        % end
+    end
+end
+
