@@ -1,4 +1,4 @@
-global magmodel agent R lat lon dlatI dlonI dlatF dlonF projection stability q m start goal position trajectory;
+global magmodel agent R lat lon dlatI dlonI dlatF dlonF projection q m start goal position trajectory;
 
 R = georefpostings([-90, 90], [-180, 180], magmodel.sample_resolution, magmodel.sample_resolution);
 [lat, lon] = R.geographicGrid();
@@ -266,7 +266,7 @@ function q = DrawIntensityGradient()
 end
 
 function m = DrawStabilityMesh(~, ~)
-    global magmodel agent R projection dlatI dlonI dlatF dlonF stability m;
+    global magmodel agent R projection dlatI dlonI dlatF dlonF m;
 
     stability = nan(R.RasterSize);
     for i = 1:length(magmodel.sample_latitudes)
