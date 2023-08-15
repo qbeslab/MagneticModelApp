@@ -23,9 +23,10 @@ classdef (Abstract) AbstractMagneticMap < handle
         function obj = AbstractMagneticMap(magmodel, agent, parent)
             %ABSTRACTMAGNETICMAP Construct an instance of this class
             obj.magmodel = magmodel;
+            obj.agent = agent;
             obj.InitializeAxes(parent);
             obj.AddContourPlots;
-            obj.AddAgent(agent);
+            obj.AddAgentPlots;
         end
 
         function AddContourPlots(obj)
@@ -112,10 +113,8 @@ classdef (Abstract) AbstractMagneticMap < handle
             end
         end
 
-        function AddAgent(obj, agent)
-            %ADDAGENT Add trajectory of an agent to maps
-
-            obj.agent = agent;
+        function AddAgentPlots(obj)
+            %ADDAGENTPLOTS Add agent trajectory and markers to map
             
             linewidth = 2;
             color = "magenta";
