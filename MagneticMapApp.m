@@ -11,6 +11,7 @@ classdef MagneticMapApp < handle
         gui matlab.ui.Figure
         g2D GeoAxes2DMagneticMap
         g3D GeoGlobe3DMagneticMap
+        gAxesm Axesm3DMagneticMap
     end
     
     methods
@@ -23,12 +24,14 @@ classdef MagneticMapApp < handle
             obj.gui = uifigure(Position=[100 200 1200 600], Name="MagneticMapApp", WindowStyle="alwaysontop");  % laptop only
             % obj.gui = uifigure(Position=[100 200 1600 800], Name="MagneticMapApp", WindowStyle="alwaysontop");  % monitor only
             % obj.gui = uifigure(Position=[1920 265 1535 785], Name="MagneticMapApp");  % dual monitors
-            ug = uigridlayout(obj.gui, [1,2]);
+            ug = uigridlayout(obj.gui, [1, 3]);
             p1 = uipanel(ug, Title="GeoAxes2DMagneticMap");
             p2 = uipanel(ug, Title="GeoGlobe3DMagneticMap");
+            p3 = uipanel(ug, Title="Axesm3DMagneticMap");
 
             obj.g2D = GeoAxes2DMagneticMap(magmodel, agent, p1);
             obj.g3D = GeoGlobe3DMagneticMap(magmodel, agent, p2);
+            obj.gAxesm = Axesm3DMagneticMap(magmodel, agent, p3);
 
             % ensure changing either 2D or 3D basemap updates both
             %    TODO adding these listeners tends to make the delete

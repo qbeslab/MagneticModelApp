@@ -32,34 +32,64 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         
         function InitializeAxes(obj, parent)
             %INITIALIZEAXES Initialize 3D axesm-based map
+            
+            % create a hidden figure to temporarily hold the axesm-based map 
+            % - parenthood of the axesm-based map must be transferred after
+            %   creation, since axesm() has no parameter for specifying a
+            %   parent
+            tempf = figure(Visible='off');
+            
             obj.projection = "globe";
             obj.ax = axesm( ...
                 MapProjection=obj.projection, ...
-                Frame='on' ...
+                Frame='off' ...
                 ... Grid='on', ParallelLabel='on', MeridianLabel='on', ...
                 ... MapLatLimit=[-80 80] ...
                 );
+            obj.ax.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             % hold(obj.ax);
 
-            load("coastlines", "coastlat", "coastlon");
-            obj.coastline_plot = plotm(coastlat, coastlon, 'b');
-            obj.coastline_plot.Clipping = 'off';  % prevent map clipping when zoomed in
-            
-            % darken the background and hide some axes elements
-            parent.Color = 'k';
-            obj.ax.Clipping = 'off';
-            obj.ax.Visible = 'off';
-
             % if obj.projection == "globe"
             %     % move the camera to the agent
+            %     % - do this before transferring parenthood away from the
+            %     %   hidden figure since these functions only act on the current
+            %     %   figure and will fail if the new parent is a uifigure/uipanel
             %     camtargm(agent.trajectory_lat(end), agent.trajectory_lon(end), 0);
             %     camposm(agent.trajectory_lat(end), agent.trajectory_lon(end), 1);
             % end
 
             % move the camera to the origin
+            % - do this before transferring parenthood away from the
+            %   hidden figure since these functions only act on the current
+            %   figure and will fail if the new parent is a uifigure/uipanel
             camtargm(0, 0, 0);
             camposm(0, 0, 1);
+
+            % transfer parenthood of the axesm-based map to the specified parent
+            obj.ax.Parent = parent;
+            delete(tempf);
+
+            load("coastlines", "coastlat", "coastlon");
+            obj.coastline_plot = plotm(coastlat, coastlon, 'b', Parent=obj.ax);
+            obj.coastline_plot.ButtonDownFcn = '';  % disable default binding to uimaptbx
+            
+            % darken the background and hide some axes elements
+            if class(obj.ax.Parent) == "matlab.ui.Figure"
+                % does not work for uipanels
+                obj.ax.Parent.Color = 'k';
+            else
+                if class(obj.ax.Parent) == "matlab.ui.container.Panel"
+                    obj.ax.Parent.BackgroundColor = 'k';
+                    obj.ax.Parent.ForegroundColor = 'w';
+                end
+            end
+            obj.ax.Color = 'k';
+            obj.ax.XColor = 'w';
+            obj.ax.YColor = 'w';
+            obj.ax.ZColor = 'w';
+            % obj.ax.Visible = 'off';
+            obj.ax.Clipping = 'off';
 
             obj.R = georefpostings([-90, 90], [-180, 180], obj.magmodel.sample_resolution, obj.magmodel.sample_resolution);
             [obj.lat, obj.lon] = obj.R.geographicGrid();
@@ -72,10 +102,10 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             obj.SetSurfaceMesh("stability");
         end
 
-        function line = AddLine(~, lat, lon, linespec, varargin)
+        function line = AddLine(obj, lat, lon, linespec, varargin)
             %ADDLINE Plot a line or markers on the map
-            line = plotm(lat, lon, linespec, varargin{:});
-            line.Clipping = 'off';  % TODO only needed if not 3D?
+            line = plotm(lat, lon, linespec, varargin{:}, Parent=obj.ax);
+            line.ButtonDownFcn = '';  % disable default binding to uimaptbx
         end
 
         function [new_lat, new_lon] = CleanLatLon(~, lat, lon)
@@ -88,8 +118,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             %UPDATEAGENTSTART Update marker for agent start
 
             delete(obj.start)  % clear existing start marker
-            obj.start = plotm(obj.agent.start_lat, obj.agent.start_lon, 'bo', MarkerSize=8, LineWidth=2);
-            obj.start.Clipping = 'off';  % TODO only needed if not 3D?
+            obj.start = plotm(obj.agent.start_lat, obj.agent.start_lon, 'bo', Parent=obj.ax, MarkerSize=8, LineWidth=2);
+            obj.start.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             drawnow;  % force figure to update immediately
         end
@@ -98,8 +128,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             %UPDATEAGENTGOAL Update marker for agent goal
 
             delete(obj.goal)  % clear existing goal marker
-            obj.goal = plotm(obj.agent.goal_lat, obj.agent.goal_lon, 'go', MarkerSize=8, LineWidth=2);
-            obj.goal.Clipping = 'off';  % TODO only needed if not 3D?
+            obj.goal = plotm(obj.agent.goal_lat, obj.agent.goal_lon, 'go', Parent=obj.ax, MarkerSize=8, LineWidth=2);
+            obj.goal.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             drawnow;  % force figure to update immediately
         end
@@ -113,12 +143,12 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             [new_lat, new_lon] = obj.CleanLatLon(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
 
             delete(obj.trajectory)  % clear existing trajectory
-            obj.trajectory = plotm(new_lat, new_lon, '-', LineWidth=2, Color='m', Marker='none', MarkerSize=2);
-            obj.trajectory.Clipping = 'off';  % TODO only needed if not 3D?
+            obj.trajectory = plotm(new_lat, new_lon, '-', Parent=obj.ax, LineWidth=2, Color='m', Marker='none', MarkerSize=2);
+            obj.trajectory.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             delete(obj.position)  % clear existing position marker
-            obj.position = plotm(new_lat(end), new_lon(end), 'mo', MarkerSize=8, LineWidth=2);
-            obj.position.Clipping = 'off';  % TODO only needed if not 3D?
+            obj.position = plotm(new_lat(end), new_lon(end), 'mo', Parent=obj.ax, MarkerSize=8, LineWidth=2);
+            obj.position.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             drawnow;  % force figure to update immediately
         end
@@ -133,17 +163,22 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     % plot an opaque terrain mesh
                     load("topo60c.mat", "topo60c", "topo60cR");
                     Z = zeros(obj.R.RasterSize);
-                    obj.surface_mesh(1) = meshm(Z, obj.R, FaceColor='w');  % first plot an opaque white mesh
-                    obj.surface_mesh(2) = geoshow(topo60c, topo60cR, DisplayType="texturemap", FaceAlpha=0.6);  % second plot the terrain mesh, made transparent to lighten the colors
-                    demcmap(topo60c);
+                    obj.surface_mesh(1) = meshm(Z, obj.R, Parent=obj.ax, FaceColor='w');  % first plot an opaque white mesh
+                    obj.surface_mesh(2) = geoshow(topo60c, topo60cR, Parent=obj.ax, DisplayType="texturemap", FaceAlpha=0.6);  % second plot the terrain mesh, made transparent to lighten the colors
+                    obj.surface_mesh(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
+                    obj.surface_mesh(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
+                    [cm, cl] = demcmap(topo60c);
+                    colormap(obj.ax, cm);
+                    clim(obj.ax, cl);
                     obj.coastline_plot.Color = 'b';
             
                 case "orthogonality"
                     % plot orthogonality as a color map
                     obj.CalculateOrthogonality();
-                    obj.surface_mesh = meshm(obj.orthogonality, obj.R);
-                    colormap("default");
-                    clim("auto");
+                    obj.surface_mesh = meshm(obj.orthogonality, obj.R, Parent=obj.ax);
+                    obj.surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
+                    colormap(obj.ax, "default");
+                    clim(obj.ax, "auto");
                     obj.coastline_plot.Color = 'w';
 
                 case "stability"
@@ -157,6 +192,15 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
         function SetVectorField(obj, vector_field_type)
             %SETVECTORFIELD ...
+
+            % temporarily change the axesm-based map's parent to a hidden figure
+            % - this is necessary when the original parent is a
+            %   uifigure/uipanel because quiverm does not support drawing
+            %   to anything other than a figure (unlike plotm, meshm, etc.,
+            %   which work as long as Parent is passed as a param)
+            parent = obj.ax.Parent;
+            tempf = figure(Visible='off');
+            obj.ax.Parent = tempf;
 
             obj.vector_field_type = vector_field_type;
             switch obj.vector_field_type
@@ -178,6 +222,10 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     % plot two sets of arrows showing the gradients of the inclination and intensity
                     obj.DrawIFGradients();
             end
+
+            % restore the original parent of the axesm-based map
+            obj.ax.Parent = parent;
+            delete(tempf);
         end
 
         function CalculateOrthogonality(obj)
@@ -245,10 +293,10 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
             if obj.surface_mesh_type == "stability"
                 obj.CalculateStability();
-                surface_mesh = meshm(obj.stability, obj.R);
-                surface_mesh.Clipping = 'off';  % TODO only needed if not 3D?
-                colormap("summer");
-                clim("auto");
+                surface_mesh = meshm(obj.stability, obj.R, Parent=obj.ax);
+                surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
+                colormap(obj.ax, "summer");
+                clim(obj.ax, "auto");
                 % if obj.projection ~= "globe"
                 %     alpha(surface_mesh, 0.3);
                 % end
@@ -285,8 +333,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 color = "#444444";
                 obj.vector_field(1).Color = color;
                 obj.vector_field(2).Color = color;
-                obj.vector_field(1).Clipping = 'off';  % prevent arrow clipping when zoomed in
-                obj.vector_field(2).Clipping = 'off';  % prevent arrow clipping when zoomed in
+                obj.vector_field(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
+                obj.vector_field(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
             end
         end
 
@@ -305,8 +353,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 color = "#EEEEEE";
                 h(1).Color = color;
                 h(2).Color = color;
-                h(1).Clipping = 'off';  % prevent arrow clipping when zoomed in
-                h(2).Clipping = 'off';  % prevent arrow clipping when zoomed in
+                h(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
+                h(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
                 obj.vector_field(1) = h(1);
                 obj.vector_field(2) = h(2);
     
@@ -315,8 +363,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 color = "#444444";
                 h(1).Color = color;
                 h(2).Color = color;
-                h(1).Clipping = 'off';  % prevent arrow clipping when zoomed in
-                h(2).Clipping = 'off';  % prevent arrow clipping when zoomed in
+                h(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
+                h(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
                 obj.vector_field(3) = h(1);
                 obj.vector_field(4) = h(2);
             end
@@ -330,8 +378,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         %     color = "#EEEEEE";
         %     q(1).Color = color;
         %     q(2).Color = color;
-        %     q(1).Clipping = 'off';  % prevent arrow clipping when zoomed in
-        %     q(2).Clipping = 'off';  % prevent arrow clipping when zoomed in
+        %     q(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
+        %     q(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
         % end
         % 
         % function q = DrawIntensityGradient(obj)        
@@ -342,8 +390,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         %     color = "#444444";
         %     q(1).Color = color;
         %     q(2).Color = color;
-        %     q(1).Clipping = 'off';  % prevent arrow clipping when zoomed in
-        %     q(2).Clipping = 'off';  % prevent arrow clipping when zoomed in
+        %     q(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
+        %     q(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
         % end
     end
 end

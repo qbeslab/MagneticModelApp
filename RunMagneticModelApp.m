@@ -19,5 +19,3 @@ end
 agent = Agent(magmodel);
 
 app = MagneticMapApp(magmodel, agent);
-
-other = Axesm3DMagneticMap(magmodel, agent);
