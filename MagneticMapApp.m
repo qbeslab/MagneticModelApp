@@ -47,6 +47,7 @@ classdef MagneticMapApp < handle
             % advance agent towards goal and then center the 3D camera
             obj.agent.Step(300);
             obj.g3D.Center3DCameraOnAgent();
+            obj.gAxesm.Center3DCameraOnAgent();
 
             % % add interactivity
             % %    TODO adding these listeners tends to make the delete

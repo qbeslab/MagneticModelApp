@@ -50,21 +50,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
             % hold(obj.ax);
 
-            % if obj.projection == "globe"
-            %     % move the camera to the agent
-            %     % - do this before transferring parenthood away from the
-            %     %   hidden figure since these functions only act on the current
-            %     %   figure and will fail if the new parent is a uifigure/uipanel
-            %     camtargm(agent.trajectory_lat(end), agent.trajectory_lon(end), 0);
-            %     camposm(agent.trajectory_lat(end), agent.trajectory_lon(end), 1);
-            % end
-
             % move the camera to the origin
-            % - do this before transferring parenthood away from the
-            %   hidden figure since these functions only act on the current
-            %   figure and will fail if the new parent is a uifigure/uipanel
-            camtargm(0, 0, 0);
-            camposm(0, 0, 1);
+            obj.Set3DCameraPosition(0, 0);
 
             % transfer parenthood of the axesm-based map to the specified parent
             obj.ax.Parent = parent;
@@ -393,6 +380,31 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         %     q(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
         %     q(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
         % end
+
+        function Set3DCameraPosition(obj, lat, lon)
+            %SET3DCAMERAPOSITION Move the 3D camera to a given coordinate
+
+            % temporarily change the axesm-based map's parent to a hidden figure
+            % - this is necessary when the original parent is a
+            %   uifigure/uipanel because the camera functions do not support drawing
+            %   to anything other than a figure (unlike plotm, meshm, etc.,
+            %   which work as long as Parent is passed as a param)
+            parent = obj.ax.Parent;
+            tempf = figure(Visible='off');
+            obj.ax.Parent = tempf;
+
+            camtargm(lat, lon, 0);
+            camposm(lat, lon, 1);
+
+            % restore the original parent of the axesm-based map
+            obj.ax.Parent = parent;
+            delete(tempf);
+        end
+
+        function Center3DCameraOnAgent(obj)
+            %CENTER3DCAMERAONAGENT Move the 3D camera to the latest agent position
+            obj.Set3DCameraPosition(obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end));
+        end
     end
 end
 
