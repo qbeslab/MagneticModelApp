@@ -238,7 +238,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             obj.stability = nan(obj.R.RasterSize);
             for i = 1:length(obj.magmodel.sample_latitudes)
                 for j = 1:length(obj.magmodel.sample_longitudes)
-                    jacobian = -obj.agent.A * [obj.dlonI(i, j), obj.dlatI(i, j); obj.dlonF(i, j)/100, obj.dlatF(i, j)/100];  % divide dF by 100 because of agent's perceived direction scaling
+                    jacobian = -obj.agent.A * [obj.dlonF(i, j)/100, obj.dlatF(i, j)/100; obj.dlonI(i, j), obj.dlatI(i, j)];  % divide dF by 100 because of agent's perceived direction scaling
                     ev = eig(jacobian);
                     evreal = real(ev);
                     evimag = imag(ev);
