@@ -180,15 +180,6 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         function SetVectorField(obj, vector_field_type)
             %SETVECTORFIELD ...
 
-            % temporarily change the axesm-based map's parent to a hidden figure
-            % - this is necessary when the original parent is a
-            %   uifigure/uipanel because quiverm does not support drawing
-            %   to anything other than a figure (unlike plotm, meshm, etc.,
-            %   which work as long as Parent is passed as a param)
-            parent = obj.ax.Parent;
-            tempf = figure(Visible='off');
-            obj.ax.Parent = tempf;
-
             obj.vector_field_type = vector_field_type;
             switch obj.vector_field_type
                 case "none"
@@ -209,10 +200,6 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     % plot two sets of arrows showing the gradients of the inclination and intensity
                     obj.DrawIFGradients();
             end
-
-            % restore the original parent of the axesm-based map
-            obj.ax.Parent = parent;
-            delete(tempf);
         end
 
         function CalculateOrthogonality(obj)
@@ -294,6 +281,15 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             %...
         
             if obj.vector_field_type == "flow"
+                % temporarily change the axesm-based map's parent to a hidden figure
+                % - this is necessary when the original parent is a
+                %   uifigure/uipanel because quiverm does not support drawing
+                %   to anything other than a figure (unlike plotm, meshm, etc.,
+                %   which work as long as Parent is passed as a param)
+                parent = obj.ax.Parent;
+                tempf = figure(Visible='off');
+                obj.ax.Parent = tempf;
+
                 try
                     delete(obj.vector_field);
                 catch
@@ -322,6 +318,10 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 obj.vector_field(2).Color = color;
                 obj.vector_field(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
                 obj.vector_field(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
+
+                % restore the original parent of the axesm-based map
+                obj.ax.Parent = parent;
+                delete(tempf);
             end
         end
 
@@ -329,6 +329,15 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             %...
 
             if obj.vector_field_type == "gradients"
+                % temporarily change the axesm-based map's parent to a hidden figure
+                % - this is necessary when the original parent is a
+                %   uifigure/uipanel because quiverm does not support drawing
+                %   to anything other than a figure (unlike plotm, meshm, etc.,
+                %   which work as long as Parent is passed as a param)
+                parent = obj.ax.Parent;
+                tempf = figure(Visible='off');
+                obj.ax.Parent = tempf;
+
                 try
                     delete(obj.vector_field);
                 catch
@@ -354,32 +363,12 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 h(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
                 obj.vector_field(3) = h(1);
                 obj.vector_field(4) = h(2);
+
+                % restore the original parent of the axesm-based map
+                obj.ax.Parent = parent;
+                delete(tempf);
             end
         end
-
-        % function q = DrawInclinationGradient(obj)
-        %     %...
-        % 
-        %     % delete(q)  % clear existing quiver plot
-        %     q = quiverm(obj.lat, obj.lon, obj.dlatI, obj.dlonI);
-        %     color = "#EEEEEE";
-        %     q(1).Color = color;
-        %     q(2).Color = color;
-        %     q(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
-        %     q(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
-        % end
-        % 
-        % function q = DrawIntensityGradient(obj)        
-        %     %...
-        % 
-        %     % delete(q)  % clear existing quiver plot
-        %     q = quiverm(obj.lat, obj.lon, obj.dlatF, obj.dlonF);
-        %     color = "#444444";
-        %     q(1).Color = color;
-        %     q(2).Color = color;
-        %     q(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
-        %     q(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
-        % end
 
         function Set3DCameraPosition(obj, lat, lon)
             %SET3DCAMERAPOSITION Move the 3D camera to a given coordinate
