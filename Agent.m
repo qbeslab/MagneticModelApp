@@ -77,8 +77,8 @@ classdef Agent < handle
             notify(obj, "GoalChanged");
         end
 
-        function SetA(obj, A)
-            %SETA Set the matrix used for navigation
+        function set.A(obj, A)
+            %SET.A Set the matrix used for navigation
             obj.A = A;
             notify(obj, "NavigationChanged");
         end
