@@ -126,12 +126,12 @@ classdef (Abstract) AbstractMagneticMap < handle
             [new_lat, new_lon] = obj.CleanLatLon(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
             obj.trajectory = obj.AddLine( ...
                 new_lat, new_lon, ...
-                '-', LineWidth=linewidth, Color=color, Marker='none', MarkerSize=2);
+                '-', Tag="Agent Trajectory", LineWidth=linewidth, Color=color, Marker='none', MarkerSize=2);
 
             % plot markers for agent start, goal, and current position
-            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'bo', MarkerSize=8, LineWidth=2);
-            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'go', MarkerSize=8, LineWidth=2);
-            obj.position = obj.AddLine(obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'mo', MarkerSize=8, LineWidth=2);
+            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'bo', Tag="Agent Start", MarkerSize=8, LineWidth=2);
+            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'go', Tag="Agent Goal", MarkerSize=8, LineWidth=2);
+            obj.position = obj.AddLine(obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'mo', Tag="Agent Position", MarkerSize=8, LineWidth=2);
 
             % add tooltips if the axes support them
             if isprop(obj.start, "DataTipTemplate")

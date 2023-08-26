@@ -58,7 +58,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             delete(tempf);
 
             load("coastlines", "coastlat", "coastlon");
-            obj.coastline_plot = plotm(coastlat, coastlon, 'b', Parent=obj.ax);
+            obj.coastline_plot = obj.AddLine(coastlat, coastlon, 'b', Tag="Coastlines");
             obj.coastline_plot.ButtonDownFcn = '';  % disable default binding to uimaptbx
             
             % darken the background and hide some axes elements
@@ -105,7 +105,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             %UPDATEAGENTSTART Update marker for agent start
 
             delete(obj.start)  % clear existing start marker
-            obj.start = plotm(obj.agent.start_lat, obj.agent.start_lon, 'bo', Parent=obj.ax, MarkerSize=8, LineWidth=2);
+            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'bo', Tag="Agent Start", MarkerSize=8, LineWidth=2);
             obj.start.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             drawnow;  % force figure to update immediately
@@ -115,7 +115,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             %UPDATEAGENTGOAL Update marker for agent goal
 
             delete(obj.goal)  % clear existing goal marker
-            obj.goal = plotm(obj.agent.goal_lat, obj.agent.goal_lon, 'go', Parent=obj.ax, MarkerSize=8, LineWidth=2);
+            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'go', Tag="Agent Goal", MarkerSize=8, LineWidth=2);
             obj.goal.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             drawnow;  % force figure to update immediately
@@ -130,11 +130,11 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             [new_lat, new_lon] = obj.CleanLatLon(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
 
             delete(obj.trajectory)  % clear existing trajectory
-            obj.trajectory = plotm(new_lat, new_lon, '-', Parent=obj.ax, LineWidth=2, Color='m', Marker='none', MarkerSize=2);
+            obj.trajectory = obj.AddLine(new_lat, new_lon, '-', Tag="Agent Trajectory", LineWidth=2, Color='m', Marker='none', MarkerSize=2);
             obj.trajectory.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             delete(obj.position)  % clear existing position marker
-            obj.position = plotm(new_lat(end), new_lon(end), 'mo', Parent=obj.ax, MarkerSize=8, LineWidth=2);
+            obj.position = obj.AddLine(new_lat(end), new_lon(end), 'mo', Tag="Agent Position", MarkerSize=8, LineWidth=2);
             obj.position.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             drawnow;  % force figure to update immediately
@@ -150,8 +150,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     % plot an opaque terrain mesh
                     load("topo60c.mat", "topo60c", "topo60cR");
                     Z = zeros(obj.R.RasterSize);
-                    obj.surface_mesh(1) = meshm(Z, obj.R, Parent=obj.ax, FaceColor='w');  % first plot an opaque white mesh
-                    obj.surface_mesh(2) = geoshow(topo60c, topo60cR, Parent=obj.ax, DisplayType="texturemap", FaceAlpha=0.6);  % second plot the terrain mesh, made transparent to lighten the colors
+                    obj.surface_mesh(1) = meshm(Z, obj.R, Parent=obj.ax, Tag="White Under Terrain", FaceColor='w');  % first plot an opaque white mesh
+                    obj.surface_mesh(2) = geoshow(topo60c, topo60cR, Parent=obj.ax, Tag="Terrain", DisplayType="texturemap", FaceAlpha=0.6);  % second plot the terrain mesh, made transparent to lighten the colors
                     obj.surface_mesh(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
                     obj.surface_mesh(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
                     [cm, cl] = demcmap(topo60c);
@@ -162,7 +162,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 case "orthogonality"
                     % plot orthogonality as a color map
                     obj.CalculateOrthogonality();
-                    obj.surface_mesh = meshm(obj.orthogonality, obj.R, Parent=obj.ax);
+                    obj.surface_mesh = meshm(obj.orthogonality, obj.R, Parent=obj.ax, Tag="Orthogonality");
                     obj.surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
                     colormap(obj.ax, "default");
                     clim(obj.ax, "auto");
@@ -267,7 +267,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
             if obj.surface_mesh_type == "stability"
                 obj.CalculateStability();
-                surface_mesh = meshm(obj.stability, obj.R, Parent=obj.ax);
+                surface_mesh = meshm(obj.stability, obj.R, Parent=obj.ax, Tag="Stability");
                 surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
                 colormap(obj.ax, "summer");
                 clim(obj.ax, "auto");
