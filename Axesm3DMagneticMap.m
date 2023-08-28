@@ -157,7 +157,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     [cm, cl] = demcmap(topo60c);
                     colormap(obj.ax, cm);
                     clim(obj.ax, cl);
-                    obj.coastline_plot.Color = 'b';
+                    obj.coastline_plot.Color = 'w';
+                    obj.FixGraphicsLayering();
             
                 case "orthogonality"
                     % plot orthogonality as a color map
@@ -167,11 +168,11 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     colormap(obj.ax, "default");
                     clim(obj.ax, "auto");
                     obj.coastline_plot.Color = 'w';
+                    obj.FixGraphicsLayering();
 
                 case "stability"
                     % plot goal stability as a color map
                     obj.surface_mesh = obj.DrawStabilityMesh();
-                    addlistener(obj.agent, "GoalChanged", @obj.DrawStabilityMesh);
                     addlistener(obj.agent, "NavigationChanged", @obj.DrawStabilityMesh);
                     obj.coastline_plot.Color = 'b';
             end
@@ -274,6 +275,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 % if obj.projection ~= "globe"
                 %     alpha(surface_mesh, 0.3);
                 % end
+                obj.FixGraphicsLayering();
             end
         end
 
@@ -393,6 +395,17 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         function Center3DCameraOnAgent(obj)
             %CENTER3DCAMERAONAGENT Move the 3D camera to the latest agent position
             obj.Set3DCameraPosition(obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end));
+        end
+
+        function FixGraphicsLayering(obj)
+            %FIXGRAPHICSLAYERING Sort surface meshes to the bottom of the graphics stack (required for 2D)
+
+            % this approach takes advantage of "matlab.graphics.primitive.Surface"
+            % coming alphabetically after "matlab.graphics.primitive.Line"
+            children = obj.ax.Children;
+            classes = arrayfun(@(g) string(class(g)), children);
+            [~, sortIdx] = sort(classes);
+            obj.ax.Children = children(sortIdx);
         end
     end
 end
