@@ -57,8 +57,8 @@ classdef (Abstract) AbstractMagneticMap < handle
                                 end
                             end
                         case "F_TOTAL"
-                            if mod(level, 10000) == 0
-                                linewidth = 2;  % multiples of 10000 nT
+                            if mod(level, 10) == 0
+                                linewidth = 2;  % multiples of 10 microtesla
                             end
                     end
 
@@ -96,7 +96,7 @@ classdef (Abstract) AbstractMagneticMap < handle
                             datatipformat = 'degrees';
                         case "F_TOTAL"
                             datatiplabel = "Intensity";
-                            datatipformat = '%g nT';
+                            datatipformat = '%g μT';
                     end
 
                     % plot contour line
@@ -137,15 +137,15 @@ classdef (Abstract) AbstractMagneticMap < handle
             if isprop(obj.start, "DataTipTemplate")
                 obj.start.DataTipTemplate.DataTipRows = [dataTipTextRow('START', ''); obj.start.DataTipTemplate.DataTipRows];
                 obj.start.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Inclination', @(~) obj.agent.start_I_INCL, 'degrees');
-                obj.start.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Intensity', @(~) obj.agent.start_F_TOTAL, '%g nT');
+                obj.start.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Intensity', @(~) obj.agent.start_F_TOTAL, '%g μT');
 
                 obj.goal.DataTipTemplate.DataTipRows = [dataTipTextRow('GOAL', ''); obj.goal.DataTipTemplate.DataTipRows];
                 obj.goal.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Inclination', @(~) obj.agent.goal_I_INCL, 'degrees');
-                obj.goal.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Intensity', @(~) obj.agent.goal_F_TOTAL, '%g nT');
+                obj.goal.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Intensity', @(~) obj.agent.goal_F_TOTAL, '%g μT');
 
                 obj.position.DataTipTemplate.DataTipRows = [dataTipTextRow('AGENT', ''); obj.position.DataTipTemplate.DataTipRows];
                 obj.position.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Inclination', @(~) obj.agent.current_I_INCL, 'degrees');
-                obj.position.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Intensity', @(~) obj.agent.current_F_TOTAL, '%g nT');
+                obj.position.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow('Intensity', @(~) obj.agent.current_F_TOTAL, '%g μT');
             end
 
             % update plots when agent changes

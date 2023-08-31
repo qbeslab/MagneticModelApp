@@ -56,7 +56,7 @@ classdef Agent < handle
 
             disp('=== START SET ===')
             disp(['Latitude: ', char(string(obj.start_lat)), '  Longitude: ', char(string(obj.start_lon))]);
-            disp(['Inclination: ', char(string(round(obj.start_I_INCL, 2))), '°  Intensity: ', char(string(round(obj.start_F_TOTAL, 2))), ' nT']);
+            disp(['Inclination: ', char(string(round(obj.start_I_INCL, 2))), '°  Intensity: ', char(string(round(obj.start_F_TOTAL, 2))), ' μT']);
 
             notify(obj, "StartChanged");
         end
@@ -72,7 +72,7 @@ classdef Agent < handle
 
             disp('=== GOAL SET ===')
             disp(['Latitude: ', char(string(obj.goal_lat)), '  Longitude: ', char(string(obj.goal_lon))]);
-            disp(['Inclination: ', char(string(round(obj.goal_I_INCL, 2))), '°  Intensity: ', char(string(round(obj.goal_F_TOTAL, 2))), ' nT']);
+            disp(['Inclination: ', char(string(round(obj.goal_I_INCL, 2))), '°  Intensity: ', char(string(round(obj.goal_F_TOTAL, 2))), ' μT']);
 
             notify(obj, "GoalChanged");
         end
@@ -132,7 +132,7 @@ classdef Agent < handle
                 current_I_INCL = obj.current_I_INCL;
                 current_F_TOTAL = obj.current_F_TOTAL;
             end
-            perceived_dir = [(goal_F_TOTAL-current_F_TOTAL)/100; ...  % TODO scale properly
+            perceived_dir = [(goal_F_TOTAL-current_F_TOTAL)*10; ...  % TODO scale properly
                              (goal_I_INCL-current_I_INCL)];
             perceived_dir = obj.A * perceived_dir;
             perceived_dir = perceived_dir/norm(perceived_dir);  % TODO scale properly

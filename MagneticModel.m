@@ -47,7 +47,7 @@ classdef MagneticModel < handle
 
             obj.contour_levels = struct( ...
                 I_INCL = -90:5:90, ... degrees
-                F_TOTAL = 0:1000:70000 ... nanotesla
+                F_TOTAL = 0:1:70 ... microtesla
                 );
             obj.contour_tables = struct( ...
                 I_INCL=table, ...
@@ -59,11 +59,18 @@ classdef MagneticModel < handle
 
         function [X, Y, Z, H, D, I, F] = EvaluateModel(obj, lat, lon)
             %EVALUATEMODEL Evaluate the magnetic field at given coords
-            %   Outputs in nanotesla and degrees
+            %   Outputs in microtesla and degrees
             [XYZ, H, D, I, F] = obj.model_func(obj.height, lat, lon, obj.decimal_year, obj.version);
             X = XYZ(1);
             Y = XYZ(2);
             Z = XYZ(3);
+
+            % convert intensities from nanotesla to microtesla
+            X = X/1000;
+            Y = Y/1000;
+            Z = Z/1000;
+            H = H/1000;
+            F = F/1000;
         end
 
         function PopulateSamples(obj)
