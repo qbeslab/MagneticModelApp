@@ -193,9 +193,9 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
                 case "flow"
                     % plot arrows showing the paths that the agent would take
-                    obj.DrawPerceivedDirectionVectorFieldPlot();
-                    addlistener(obj.agent, "GoalChanged", @obj.DrawPerceivedDirectionVectorFieldPlot);
-                    addlistener(obj.agent, "NavigationChanged", @obj.DrawPerceivedDirectionVectorFieldPlot);
+                    obj.DrawFlowVectorFieldPlot();
+                    addlistener(obj.agent, "GoalChanged", @obj.DrawFlowVectorFieldPlot);
+                    addlistener(obj.agent, "NavigationChanged", @obj.DrawFlowVectorFieldPlot);
 
                 case "gradients"
                     % plot two sets of arrows showing the gradients of the inclination and intensity
@@ -279,7 +279,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             end
         end
 
-        function DrawPerceivedDirectionVectorFieldPlot(obj, ~, ~)
+        function DrawFlowVectorFieldPlot(obj, ~, ~)
             %...
         
             if obj.vector_field_type == "flow"
@@ -308,9 +308,9 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     for j = 1:length(obj.magmodel.sample_longitudes)
                         I = obj.magmodel.samples.I_INCL(i, j);
                         F = obj.magmodel.samples.F_TOTAL(i, j);
-                        perceived_dir = obj.agent.ComputeDirection(goal_I, goal_F, I, F);
-                        dlon(i, j) = perceived_dir(1);
-                        dlat(i, j) = perceived_dir(2);
+                        velocity = obj.agent.ComputeVelocity(goal_I, goal_F, I, F);
+                        dlon(i, j) = velocity(1);
+                        dlat(i, j) = velocity(2);
                     end
                 end
             

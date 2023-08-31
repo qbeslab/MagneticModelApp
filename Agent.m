@@ -18,7 +18,8 @@ classdef Agent < handle
         current_I_INCL double
         current_F_TOTAL double
         A (2,2) double = [1, 0; 0, 1]  % TODO scale properly
-        speed double = 1/10  % TODO scale properly
+        max_speed double = 1/10  % TODO scale properly
+        time_step double = 1
     end
     
     events
@@ -101,11 +102,11 @@ classdef Agent < handle
             end
 
             for i = 1:n
-                perceived_dir = obj.ComputeDirection();
-                % disp(['perceived_dir: ', obj.ApproxDirectionString(perceived_dir), ' [', char(string(perceived_dir(1))), ', ', char(string(perceived_dir(2))), ']']);
+                velocity = obj.ComputeVelocity();
+                % disp(['velocity: ', obj.ApproxDirectionString(velocity), ' [', char(string(velocity(1))), ', ', char(string(velocity(2))), ']']);
     
-                new_lon = obj.trajectory_lon(end) + perceived_dir(1) * obj.speed;
-                new_lat = obj.trajectory_lat(end) + perceived_dir(2) * obj.speed;
+                new_lon = obj.trajectory_lon(end) + velocity(1) * obj.time_step;
+                new_lat = obj.trajectory_lat(end) + velocity(2) * obj.time_step;
 
                 if abs(new_lat) > 90
                     disp("aborting: crossed polar singularity");
@@ -124,22 +125,25 @@ classdef Agent < handle
             notify(obj, "TrajectoryChanged");
         end
 
-        function perceived_dir = ComputeDirection(obj, goal_I_INCL, goal_F_TOTAL, current_I_INCL, current_F_TOTAL)
-            %COMPUTEDIRECTION Calculate the perceived direction of the goal
+        function velocity = ComputeVelocity(obj, goal_I_INCL, goal_F_TOTAL, current_I_INCL, current_F_TOTAL)
+            %COMPUTEVELOCITY Calculate the agent's velocity
             if nargin == 1
                 goal_I_INCL = obj.goal_I_INCL;
                 goal_F_TOTAL = obj.goal_F_TOTAL;
                 current_I_INCL = obj.current_I_INCL;
                 current_F_TOTAL = obj.current_F_TOTAL;
             end
-            perceived_dir = obj.A * [goal_F_TOTAL-current_F_TOTAL; ...
-                                     goal_I_INCL-current_I_INCL];
-            perceived_dir = perceived_dir/norm(perceived_dir);  % TODO scale properly
+            velocity = obj.A * [goal_F_TOTAL-current_F_TOTAL; ...
+                                goal_I_INCL-current_I_INCL];
+            if norm(velocity) > obj.max_speed
+                % limit the agent's speed to a maximum value
+                velocity = obj.max_speed * velocity/norm(velocity);
+            end
         end
 
-        function dir_string = ApproxDirectionString(~, perceived_dir)
-            %APPROXDIRECTIONSTRING Convert a perceived direction vector to an approximate string representation
-            angle = atan2d(perceived_dir(2), perceived_dir(1));
+        function dir_string = ApproxDirectionString(~, velocity)
+            %APPROXDIRECTIONSTRING Convert a velocity vector to an approximate string representation
+            angle = atan2d(velocity(2), velocity(1));
             angle = round(angle/22.5)*22.5;
             switch angle
                 case 0
