@@ -132,9 +132,8 @@ classdef Agent < handle
                 current_I_INCL = obj.current_I_INCL;
                 current_F_TOTAL = obj.current_F_TOTAL;
             end
-            perceived_dir = [(goal_F_TOTAL-current_F_TOTAL)*10; ...  % TODO scale properly
-                             (goal_I_INCL-current_I_INCL)];
-            perceived_dir = obj.A * perceived_dir;
+            perceived_dir = obj.A * [goal_F_TOTAL-current_F_TOTAL; ...
+                                     goal_I_INCL-current_I_INCL];
             perceived_dir = perceived_dir/norm(perceived_dir);  % TODO scale properly
         end
 
