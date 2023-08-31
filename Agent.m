@@ -139,7 +139,7 @@ classdef Agent < handle
 
         function dir_string = ApproxDirectionString(~, perceived_dir)
             %APPROXDIRECTIONSTRING Convert a perceived direction vector to an approximate string representation
-            angle = atan2d(perceived_dir(1), perceived_dir(2));
+            angle = atan2d(perceived_dir(2), perceived_dir(1));
             angle = round(angle/22.5)*22.5;
             switch angle
                 case 0
