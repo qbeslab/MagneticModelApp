@@ -257,9 +257,9 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
                     evreal = real(ev);
                     evimag = imag(ev);
-                    tol = 1e-10;
+                    tol = 1e-6;
                     is_unstable = evreal(1) > tol || evreal(2) > tol;
-                    is_neutrally_stable = abs(evreal(1)) < 0 && abs(evreal(2)) < 0;
+                    is_neutrally_stable = abs(evreal(1)) < tol || abs(evreal(2)) < tol;
                     has_rotation = abs(evimag(1)) > tol || abs(evimag(2)) > tol;
                     if is_unstable
                         % at least one eigenvalue real-part is positive: unstable (repelling)
@@ -273,10 +273,10 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     else
                         % both eigenvalue real-parts are non-positive: stable (attracting) or neutrally stable
                         if is_neutrally_stable
-                            % both eigenvalue real-parts are zero (or very close): neutrally stable
+                            % at least one eigenvalue real-part is zero (or very close): neutrally stable
                             obj.stability(i, j) = 0.5;
                         else
-                            % both eigenvalue real-parts are positive: stable (attracting)
+                            % both eigenvalue real-parts are negative: stable (attracting)
                             if has_rotation
                                 % spiral sink
                                 obj.stability(i,j) = 0.25;  % medium green with summer colormap
