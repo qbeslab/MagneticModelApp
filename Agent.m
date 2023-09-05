@@ -133,7 +133,7 @@ classdef Agent < handle
                 current_I_INCL = obj.current_I_INCL;
                 current_F_TOTAL = obj.current_F_TOTAL;
             end
-            velocity = obj.A * [goal_F_TOTAL-current_F_TOTAL; ...
+            velocity = obj.A * [goal_F_TOTAL-current_F_TOTAL;
                                 goal_I_INCL-current_I_INCL];
             if norm(velocity) > obj.max_speed
                 % limit the agent's speed to a maximum value
