@@ -234,6 +234,27 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     jacobian = -obj.agent.A * [obj.dlonF(i, j), obj.dlatF(i, j);
                                                obj.dlonI(i, j), obj.dlatI(i, j)];
                     ev = eig(jacobian);
+
+                    % % check analytical form of jacobian eigenvalues
+                    % a = obj.agent.A(1, 1);
+                    % b = obj.agent.A(1, 2);
+                    % c = obj.agent.A(2, 1);
+                    % d = obj.agent.A(2, 2);
+                    % dFdx = obj.dlonF(i, j);
+                    % dFdy = obj.dlatF(i, j);
+                    % dIdx = obj.dlonI(i, j);
+                    % dIdy = obj.dlatI(i, j);
+                    % trJ = -(a * dFdx + b * dIdx + c * dFdy + d * dIdy);
+                    % detJ = (a * d - b * c) * (dFdx * dIdy - dFdy * dIdx);
+                    % ev2 = [(trJ - sqrt(trJ^2 - 4 * detJ)) / 2;
+                    %        (trJ + sqrt(trJ^2 - 4 * detJ)) / 2];
+                    % if norm(sort(ev) - sort(ev2)) > 1e-10
+                    %     disp("significant deviation found:");
+                    %     disp([i, j]);
+                    %     disp([sort(ev), sort(ev2)]);
+                    %     disp(norm(sort(ev) - sort(ev2)));
+                    % end
+
                     evreal = real(ev);
                     evimag = imag(ev);
                     tol = 1e-10;
