@@ -87,6 +87,14 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             % obj.SetMesh("terrain");
             % obj.SetMesh("orthogonality");
             obj.SetSurfaceMesh("stability");
+
+            obj.SetVectorField("none");
+            % obj.SetVectorField("flow");
+            % obj.SetVectorField("gradients");
+
+            addlistener(obj.agent, "NavigationChanged", @obj.DrawStabilityMesh);
+            addlistener(obj.agent, "NavigationChanged", @obj.DrawFlowVectorFieldPlot);
+            addlistener(obj.agent, "GoalChanged", @obj.DrawFlowVectorFieldPlot);
         end
 
         function line = AddLine(obj, lat, lon, linespec, varargin)
@@ -173,7 +181,6 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 case "stability"
                     % plot goal stability as a color map
                     obj.surface_mesh = obj.DrawStabilityMesh();
-                    addlistener(obj.agent, "NavigationChanged", @obj.DrawStabilityMesh);
                     obj.coastline_plot.Color = 'b';
             end
         end
@@ -194,8 +201,6 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 case "flow"
                     % plot arrows showing the paths that the agent would take
                     obj.DrawFlowVectorFieldPlot();
-                    addlistener(obj.agent, "GoalChanged", @obj.DrawFlowVectorFieldPlot);
-                    addlistener(obj.agent, "NavigationChanged", @obj.DrawFlowVectorFieldPlot);
 
                 case "gradients"
                     % plot two sets of arrows showing the gradients of the inclination and intensity
