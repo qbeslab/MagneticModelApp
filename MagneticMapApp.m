@@ -75,6 +75,19 @@ classdef MagneticMapApp < handle
                     obj.agent.Reset();
                 case 's'
                     obj.g3D.SetAgentStartTo3DCamPos();
+                % case 'x'
+                %     % temporarily change the axesm-based map's parent to a figure
+                %     % - this is necessary because inputm only works inside figures
+                %     parent = obj.gAxesm.ax.Parent;
+                %     tempf = figure();
+                %     obj.gAxesm.ax.Parent = tempf;
+                % 
+                %     [lat, lon] = inputm(1);
+                %     disp([lat, lon]);
+                % 
+                %     % restore the original parent of the axesm-based map
+                %     obj.gAxesm.ax.Parent = parent;
+                %     delete(tempf);
                 case '1'
                     obj.agent.Step(1);
                 case '2'
