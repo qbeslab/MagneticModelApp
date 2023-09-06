@@ -5,6 +5,12 @@
 % Optional add-ons (use MATLAB's Add-On Explorer to install):
 %   - MATLAB Basemap Data - colorterrain (install for offline use)
 
+try
+    % if app is already open, make sure the old window closes
+    delete(app);
+catch
+    % otherwise do nothing
+end
 close all;
 clear;
 

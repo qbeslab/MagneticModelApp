@@ -34,14 +34,10 @@ classdef MagneticMapApp < handle
             obj.gAxesm = Axesm3DMagneticMap(magmodel, agent, p3);
 
             % ensure changing either 2D or 3D basemap updates both
-            %    TODO adding these listeners tends to make the delete
-            %    method's attempt to close the app fail
             addlistener(obj.g2D.ax, 'Basemap', 'PostSet', @obj.SyncBaseMaps);
             addlistener(obj.g3D.ax, 'Basemap', 'PostSet', @obj.SyncBaseMaps);
 
             % add keyboard shortcuts
-            %    TODO auto closing of the app stops working when key/mouse
-            %    press listeners are active
             obj.gui.KeyPressFcn = @obj.ProcessKeyPress;
 
             % advance agent towards goal and then center the 3D camera
@@ -50,8 +46,6 @@ classdef MagneticMapApp < handle
             obj.gAxesm.Center3DCameraOnAgent();
 
             % % add interactivity
-            % %    TODO adding these listeners tends to make the delete
-            % %    method's attempt to close the app fail
             % % obj.g2D.ax.ButtonDownFcn = @obj.ReportEvent;
             % obj.g2D.ax.ButtonDownFcn = @obj.PrintCoords2D;
             % % obj.g3D.ax.ButtonDownFcn = @obj.ReportEvent;  % TODO not working
@@ -59,8 +53,6 @@ classdef MagneticMapApp < handle
 
         function delete(obj)
             %DELETE Clean up app when this object is deleted
-            %   TODO this stops working when key/mouse press listeners are
-            %   active
             if class(obj.gui) == "matlab.ui.Figure" && isvalid(obj.gui)
                 % "close all" does not work on uifigure app windows
                 close(obj.gui);
@@ -111,7 +103,7 @@ classdef MagneticMapApp < handle
         %     disp(event);
         % end
         % 
-        % function PrintCoords2D(obj, ~, event)
+        % function PrintCoords2D(~, ~, event)
         %     %PRINTCOORDS2D Print the coords of a click on the 2D map
         %     lat = event.IntersectionPoint(1);
         %     lon = event.IntersectionPoint(2);
