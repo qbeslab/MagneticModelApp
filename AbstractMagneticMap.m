@@ -125,6 +125,17 @@ classdef (Abstract) AbstractMagneticMap < handle
             obj.SortZStack();
         end
 
+        function RemoveContourPlots(obj)
+            %REMOVECONTOURPLOTS Remove magnetic property contours from map
+            children = obj.ax.Children;
+            for i = length(children):-1:1
+                tag = children(i).Tag;
+                if contains(tag, "I_INCL = ") || contains (tag, "F_TOTAL = ")
+                    delete(children(i));
+                end
+            end
+        end
+
         function AddAgentPlots(obj)
             %ADDAGENTPLOTS Add agent trajectory and markers to map
             
