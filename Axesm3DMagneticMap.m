@@ -415,8 +415,13 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     % do nothing if already deleted
                 end
 
+                % by scaling the gradients manually and passing 0 to
+                % quiverm's scale parameter, we ensures inclination and
+                % intensity gradients are on an identical custom scale
+                scale = 0.5;
+
                 % draw inclination gradient
-                h = quiverm(obj.lat, obj.lon, obj.dlatI, obj.dlonI);
+                h = quiverm(obj.lat, obj.lon, obj.dlatI * scale, obj.dlonI * scale, '-', 0);
                 color = "#EEEEEE";
                 h(1).Color = color;
                 h(2).Color = color;
@@ -428,7 +433,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 obj.vector_field(2) = h(2);
     
                 % draw intensity gradient
-                h = quiverm(obj.lat, obj.lon, obj.dlatF, obj.dlonF);
+                h = quiverm(obj.lat, obj.lon, obj.dlatF * scale, obj.dlonF * scale, '-', 0);
                 color = "#444444";
                 h(1).Color = color;
                 h(2).Color = color;
