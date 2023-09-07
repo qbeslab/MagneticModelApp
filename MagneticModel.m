@@ -99,5 +99,26 @@ classdef MagneticModel < handle
                 obj.contour_tables.(param) = getContourLineCoordinates(contour_matrix);
             end
         end
+
+        function [dFx, dFy, dIx, dIy] = EstimateGradients(obj, lat, lon, ddeg)
+            %ESTIMATEGRADIENTS Estimate the intensity and inclination graditents at a location
+
+            if nargin == 3
+                ddeg = 1e-3;
+            end
+
+            % sample at location
+            [~, ~, ~, ~, ~, I1, F1] = obj.EvaluateModel(lat, lon);
+
+            % sample at a greater longitude (+x, east)
+            [~, ~, ~, ~, ~, I2, F2] = obj.EvaluateModel(lat, lon + ddeg);
+            dFx = (F2 - F1) / ddeg;
+            dIx = (I2 - I1) / ddeg;
+
+            % sample at a greater latitude (+y, north)
+            [~, ~, ~, ~, ~, I2, F2] = obj.EvaluateModel(lat + ddeg, lon);
+            dFy = (F2 - F1) / ddeg;
+            dIy = (I2 - I1) / ddeg;
+        end
     end
 end
