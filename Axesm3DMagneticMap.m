@@ -40,11 +40,20 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             tempf = figure(Visible='off');
             
             obj.projection = "globe";
+            % obj.projection = "robinson";
+            % obj.projection = "mercator";
+
+            switch obj.projection
+                case "mercator"
+                    maplatlim = [-75.5, 75.5];
+                otherwise
+                    maplatlim = [];
+            end
+
             obj.ax = axesm( ...
                 MapProjection=obj.projection, ...
-                Frame='off' ...
-                ... Grid='on', ParallelLabel='on', MeridianLabel='on', ...
-                ... MapLatLimit=[-80 80] ...
+                Frame='off', MapLatLimit=maplatlim ...
+                ... Grid='on', ParallelLabel='on', MeridianLabel='on' ...
                 );
             obj.ax.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
