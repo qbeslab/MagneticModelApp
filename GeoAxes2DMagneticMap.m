@@ -30,7 +30,9 @@ classdef GeoAxes2DMagneticMap < AbstractMagneticMap
 
         function line = AddLine(obj, lat, lon, linespec, varargin)
             %ADDLINE Plot a line or markers on the map
+            [zorder, varargin] = obj.PopArg(varargin, "ZOrder", 1);
             line = geoplot(obj.ax, lat, lon, linespec, varargin{:});
+            line.UserData.ZOrder = zorder;  % used for graphics layering
         end
 
         function [new_lat, new_lon] = CleanLatLon(~, lat, lon)

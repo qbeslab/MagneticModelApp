@@ -58,7 +58,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             delete(tempf);
 
             load("coastlines", "coastlat", "coastlon");
-            obj.coastline_plot = obj.AddLine(coastlat, coastlon, 'b', Tag="Coastlines");
+            obj.coastline_plot = obj.AddLine(coastlat, coastlon, 'b', Tag="Coastlines", ZOrder=1);
             obj.coastline_plot.ButtonDownFcn = '';  % disable default binding to uimaptbx
             
             % darken the background and hide some axes elements
@@ -99,7 +99,9 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
         function line = AddLine(obj, lat, lon, linespec, varargin)
             %ADDLINE Plot a line or markers on the map
+            [zorder, varargin] = obj.PopArg(varargin, "ZOrder", 1);
             line = plotm(lat, lon, linespec, varargin{:}, Parent=obj.ax);
+            line.UserData.ZOrder = zorder;  % used for graphics layering
             line.ButtonDownFcn = '';  % disable default binding to uimaptbx
         end
 
@@ -113,20 +115,22 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             %UPDATEAGENTSTART Update marker for agent start
 
             delete(obj.start)  % clear existing start marker
-            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'bo', Tag="Agent Start", MarkerSize=8, LineWidth=2);
+            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'bo', Tag="Agent Start", MarkerSize=8, LineWidth=2, ZOrder=11);
             obj.start.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
-            drawnow;  % force figure to update immediately
+            % update graphics layering
+            obj.SortZStack();
         end
 
         function UpdateAgentGoal(obj, ~, ~)
             %UPDATEAGENTGOAL Update marker for agent goal
 
             delete(obj.goal)  % clear existing goal marker
-            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'go', Tag="Agent Goal", MarkerSize=8, LineWidth=2);
+            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'go', Tag="Agent Goal", MarkerSize=8, LineWidth=2, ZOrder=12);
             obj.goal.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
-            drawnow;  % force figure to update immediately
+            % update graphics layering
+            obj.SortZStack();
         end
 
         function UpdateAgentTrajectory(obj, ~, ~)
@@ -138,14 +142,15 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             [new_lat, new_lon] = obj.CleanLatLon(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
 
             delete(obj.trajectory)  % clear existing trajectory
-            obj.trajectory = obj.AddLine(new_lat, new_lon, '-', Tag="Agent Trajectory", LineWidth=2, Color='m', Marker='none', MarkerSize=2);
+            obj.trajectory = obj.AddLine(new_lat, new_lon, '-', Tag="Agent Trajectory", LineWidth=2, Color='m', Marker='none', MarkerSize=2, ZOrder=10);
             obj.trajectory.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             delete(obj.position)  % clear existing position marker
-            obj.position = obj.AddLine(new_lat(end), new_lon(end), 'mo', Tag="Agent Position", MarkerSize=8, LineWidth=2);
+            obj.position = obj.AddLine(new_lat(end), new_lon(end), 'mo', Tag="Agent Position", MarkerSize=8, LineWidth=2, ZOrder=13);
             obj.position.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
-            drawnow;  % force figure to update immediately
+            % update graphics layering
+            obj.SortZStack();
         end
 
         function SetSurfaceMesh(obj, surface_mesh_type)
@@ -160,23 +165,30 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     Z = zeros(obj.R.RasterSize);
                     obj.surface_mesh(1) = meshm(Z, obj.R, Parent=obj.ax, Tag="White Under Terrain", FaceColor='w');  % first plot an opaque white mesh
                     obj.surface_mesh(2) = geoshow(topo60c, topo60cR, Parent=obj.ax, Tag="Terrain", DisplayType="texturemap", FaceAlpha=0.6);  % second plot the terrain mesh, made transparent to lighten the colors
+                    obj.surface_mesh(1).UserData.ZOrder = -1;
+                    obj.surface_mesh(2).UserData.ZOrder = 0;
                     obj.surface_mesh(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
                     obj.surface_mesh(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
                     [cm, cl] = demcmap(topo60c);
                     colormap(obj.ax, cm);
                     clim(obj.ax, cl);
                     obj.coastline_plot.Color = 'w';
-                    obj.FixGraphicsLayering();
+
+                    % update graphics layering
+                    obj.SortZStack();
             
                 case "orthogonality"
                     % plot orthogonality as a color map
                     obj.CalculateOrthogonality();
                     obj.surface_mesh = meshm(obj.orthogonality, obj.R, Parent=obj.ax, Tag="Orthogonality");
+                    obj.surface_mesh.UserData.ZOrder = 0;
                     obj.surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
                     colormap(obj.ax, "default");
                     clim(obj.ax, "auto");
                     obj.coastline_plot.Color = 'w';
-                    obj.FixGraphicsLayering();
+
+                    % update graphics layering
+                    obj.SortZStack();
 
                 case "stability"
                     % plot goal stability as a color map
@@ -318,13 +330,16 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             if obj.surface_mesh_type == "stability"
                 obj.CalculateStability();
                 surface_mesh = meshm(obj.stability, obj.R, Parent=obj.ax, Tag="Stability");
+                surface_mesh.UserData.ZOrder = 0;
                 surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
                 colormap(obj.ax, "summer");
                 clim(obj.ax, "auto");
                 % if obj.projection ~= "globe"
                 %     alpha(surface_mesh, 0.3);
                 % end
-                obj.FixGraphicsLayering();
+                
+                % update graphics layering
+                obj.SortZStack();
             end
         end
 
@@ -367,8 +382,13 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 color = "#444444";
                 obj.vector_field(1).Color = color;
                 obj.vector_field(2).Color = color;
+                obj.vector_field(1).UserData.ZOrder = 3;
+                obj.vector_field(2).UserData.ZOrder = 3;
                 obj.vector_field(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
                 obj.vector_field(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
+
+                % update graphics layering
+                obj.SortZStack();
 
                 % restore the original parent of the axesm-based map
                 obj.ax.Parent = parent;
@@ -400,6 +420,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 color = "#EEEEEE";
                 h(1).Color = color;
                 h(2).Color = color;
+                h(1).UserData.ZOrder = 3;
+                h(2).UserData.ZOrder = 3;
                 h(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
                 h(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
                 obj.vector_field(1) = h(1);
@@ -410,10 +432,15 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 color = "#444444";
                 h(1).Color = color;
                 h(2).Color = color;
+                h(1).UserData.ZOrder = 3;
+                h(2).UserData.ZOrder = 3;
                 h(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
                 h(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
                 obj.vector_field(3) = h(1);
                 obj.vector_field(4) = h(2);
+
+                % update graphics layering
+                obj.SortZStack();
 
                 % restore the original parent of the axesm-based map
                 obj.ax.Parent = parent;
@@ -444,17 +471,6 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         function Center3DCameraOnAgent(obj)
             %CENTER3DCAMERAONAGENT Move the 3D camera to the latest agent position
             obj.Set3DCameraPosition(obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end));
-        end
-
-        function FixGraphicsLayering(obj)
-            %FIXGRAPHICSLAYERING Sort surface meshes to the bottom of the graphics stack (required for 2D)
-
-            % this approach takes advantage of "matlab.graphics.primitive.Surface"
-            % coming alphabetically after "matlab.graphics.primitive.Line"
-            children = obj.ax.Children;
-            classes = arrayfun(@(g) string(class(g)), children);
-            [~, sortIdx] = sort(classes);
-            obj.ax.Children = children(sortIdx);
         end
     end
 end

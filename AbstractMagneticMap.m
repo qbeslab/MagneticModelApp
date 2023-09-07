@@ -76,6 +76,15 @@ classdef (Abstract) AbstractMagneticMap < handle
                             color = "#444444";  % dark gray
                     end
 
+                    % set zorder
+                    zorder = 2;
+                    switch param
+                        case "I_INCL"
+                            zorder = 2.1;
+                        case "F_TOTAL"
+                            zorder = 2.2;
+                    end
+
                     % get contour line coordinates
                     contour_lat = contour_table.Y(gidx);
                     contour_lon = contour_table.X(gidx);
@@ -102,7 +111,8 @@ classdef (Abstract) AbstractMagneticMap < handle
                     % plot contour line
                     line = obj.AddLine( ...
                         contour_lat, contour_lon, ...
-                        '-', LineWidth=linewidth, Color=color, Tag=tag ...
+                        '-', LineWidth=linewidth, Color=color, ...
+                        Tag=tag, ZOrder=zorder ...
                         );
                     if isprop(line, "DataTipTemplate")
                         % add tooltips if the axes support them
@@ -110,6 +120,9 @@ classdef (Abstract) AbstractMagneticMap < handle
                     end
                 end
             end
+
+            % update graphics layering
+            obj.SortZStack();
         end
 
         function AddAgentPlots(obj)
@@ -125,12 +138,12 @@ classdef (Abstract) AbstractMagneticMap < handle
             [new_lat, new_lon] = obj.CleanLatLon(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
             obj.trajectory = obj.AddLine( ...
                 new_lat, new_lon, ...
-                '-', Tag="Agent Trajectory", LineWidth=linewidth, Color=color, Marker='none', MarkerSize=2);
+                '-', Tag="Agent Trajectory", LineWidth=linewidth, Color=color, Marker='none', MarkerSize=2, ZOrder=10);
 
             % plot markers for agent start, goal, and current position
-            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'bo', Tag="Agent Start", MarkerSize=8, LineWidth=2);
-            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'go', Tag="Agent Goal", MarkerSize=8, LineWidth=2);
-            obj.position = obj.AddLine(obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'mo', Tag="Agent Position", MarkerSize=8, LineWidth=2);
+            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'bo', Tag="Agent Start", MarkerSize=8, LineWidth=2,ZOrder=11);
+            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'go', Tag="Agent Goal", MarkerSize=8, LineWidth=2, ZOrder=12);
+            obj.position = obj.AddLine(obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'mo', Tag="Agent Position", MarkerSize=8, LineWidth=2, ZOrder=13);
 
             % add tooltips if the axes support them
             if isprop(obj.start, "DataTipTemplate")
@@ -151,6 +164,9 @@ classdef (Abstract) AbstractMagneticMap < handle
             addlistener(obj.agent, 'StartChanged', @obj.UpdateAgentStart);
             addlistener(obj.agent, 'GoalChanged', @obj.UpdateAgentGoal);
             addlistener(obj.agent, 'TrajectoryChanged', @obj.UpdateAgentTrajectory);
+
+            % update graphics layering
+            obj.SortZStack();
         end
 
         function ToggleAgentTrajectoryMarkers(obj)
@@ -195,6 +211,44 @@ classdef (Abstract) AbstractMagneticMap < handle
             obj.position.LongitudeData = new_lon(end);
 
             drawnow;  % force figure to update immediately
+        end
+
+        function SortZStack(obj)
+            %SORTZSTACK Sort graphics elements according to ZOrder (greater values on top)
+            children = obj.ax.Children;
+            zorders = nan(length(children), 1);
+            for i = 1:length(children)
+                if isfield(children(i).UserData, "ZOrder")
+                    zorders(i) = children(i).UserData.ZOrder;
+                else
+                    zorders(i) = 1;  % default
+                end
+            end
+            [~, sortidx] = sort(zorders);
+            sortidx = sortidx(end:-1:1);  % reverse to get greatest to smallest ZOrder
+            obj.ax.Children = children(sortidx);
+            drawnow;  % force figure to update immediately
+        end
+
+        function [value, newvarargs] = PopArg(~, varargs, name, default)
+            %POPARG Extract one name-value pair from a function varargin
+
+            % convert varargs from a cell array to a struct
+            s = struct(varargs{:});
+
+            if isfield(s, name)
+                % extract value of named property if it exists
+                value = s.(name);
+
+                % remove the name-value pair and convert the struct back to a cell array
+                s = rmfield(s, name);
+                newvarargs = [fieldnames(s), struct2cell(s)]';
+                newvarargs = newvarargs(:)';
+            else
+                % return default value and original cell array if named property does not exist
+                value = default;
+                newvarargs = varargs;
+            end
         end
     end
 end
