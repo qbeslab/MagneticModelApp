@@ -213,11 +213,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             switch obj.vector_field_type
                 case "none"
                     % clear the vector field
-                    try
-                        delete(obj.vector_field);
-                    catch
-                        % do nothing if already deleted
-                    end
+                    delete(obj.vector_field);
 
                 case "flow"
                     % plot arrows showing the paths that the agent would take
@@ -338,13 +334,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
             if obj.surface_mesh_type == "stability"
                 obj.CalculateStability();
-
-                try
-                    delete(obj.surface_mesh);
-                catch
-                    % do nothing if already deleted
-                end
-
+                delete(obj.surface_mesh);
                 obj.surface_mesh = meshm(obj.stability, obj.R, Parent=obj.ax, Tag="Stability");
                 obj.surface_mesh.UserData.ZOrder = 0;
                 obj.surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
@@ -372,11 +362,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 tempf = figure(Visible='off');
                 obj.ax.Parent = tempf;
 
-                try
-                    delete(obj.vector_field);
-                catch
-                    % do nothing if already deleted
-                end
+                delete(obj.vector_field);
 
                 goal_I = obj.agent.goal_I_INCL;
                 goal_F = obj.agent.goal_F_TOTAL;
@@ -425,11 +411,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 tempf = figure(Visible='off');
                 obj.ax.Parent = tempf;
 
-                try
-                    delete(obj.vector_field);
-                catch
-                    % do nothing if already deleted
-                end
+                delete(obj.vector_field);
 
                 % by scaling the gradients manually and passing 0 to
                 % quiverm's scale parameter, we ensures inclination and
