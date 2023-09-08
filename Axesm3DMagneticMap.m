@@ -384,6 +384,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 color = "#444444";
                 obj.vector_field(1).Color = color;
                 obj.vector_field(2).Color = color;
+                obj.vector_field(1).Tag = "Flow (Arrow Shafts)";
+                obj.vector_field(2).Tag = "Flow (Arrow Heads)";
                 obj.vector_field(1).UserData.ZOrder = 3;
                 obj.vector_field(2).UserData.ZOrder = 3;
                 obj.vector_field(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
@@ -423,6 +425,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 color = "#EEEEEE";
                 h(1).Color = color;
                 h(2).Color = color;
+                h(1).Tag = "Inclination Gradient (Arrow Shafts)";
+                h(2).Tag = "Inclination Gradient (Arrow Heads)";
                 h(1).UserData.ZOrder = 3;
                 h(2).UserData.ZOrder = 3;
                 h(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
@@ -435,6 +439,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 color = "#444444";
                 h(1).Color = color;
                 h(2).Color = color;
+                h(1).Tag = "Intensity Gradient (Arrow Shafts)";
+                h(2).Tag = "Intensity Gradient (Arrow Heads)";
                 h(1).UserData.ZOrder = 3;
                 h(2).UserData.ZOrder = 3;
                 h(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
