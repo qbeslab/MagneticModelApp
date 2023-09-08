@@ -123,7 +123,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         function UpdateAgentStart(obj, ~, ~)
             %UPDATEAGENTSTART Update marker for agent start
 
-            delete(obj.start)  % clear existing start marker
+            delete(obj.start);  % clear existing start marker
             obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'bo', Tag="Agent Start", MarkerSize=8, LineWidth=2, ZOrder=11);
             obj.start.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
@@ -134,7 +134,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         function UpdateAgentGoal(obj, ~, ~)
             %UPDATEAGENTGOAL Update marker for agent goal
 
-            delete(obj.goal)  % clear existing goal marker
+            delete(obj.goal);  % clear existing goal marker
             obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'go', Tag="Agent Goal", MarkerSize=8, LineWidth=2, ZOrder=12);
             obj.goal.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
@@ -150,11 +150,11 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             % [-180, 180] (3D plot does not need this correction)
             [new_lat, new_lon] = obj.CleanLatLon(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
 
-            delete(obj.trajectory)  % clear existing trajectory
+            delete(obj.trajectory);  % clear existing trajectory
             obj.trajectory = obj.AddLine(new_lat, new_lon, '-', Tag="Agent Trajectory", LineWidth=2, Color='m', Marker='none', MarkerSize=2, ZOrder=10);
             obj.trajectory.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
-            delete(obj.position)  % clear existing position marker
+            delete(obj.position);  % clear existing position marker
             obj.position = obj.AddLine(new_lat(end), new_lon(end), 'mo', Tag="Agent Position", MarkerSize=8, LineWidth=2, ZOrder=13);
             obj.position.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
@@ -201,7 +201,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
                 case "stability"
                     % plot goal stability as a color map
-                    obj.surface_mesh = obj.DrawStabilityMesh();
+                    obj.DrawStabilityMesh();
                     obj.coastline_plot.Color = 'b';
             end
         end
@@ -333,14 +333,21 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             end
         end
 
-        function surface_mesh = DrawStabilityMesh(obj, ~, ~)
+        function DrawStabilityMesh(obj, ~, ~)
             %DRAWSTABILITYMESH ...
 
             if obj.surface_mesh_type == "stability"
                 obj.CalculateStability();
-                surface_mesh = meshm(obj.stability, obj.R, Parent=obj.ax, Tag="Stability");
-                surface_mesh.UserData.ZOrder = 0;
-                surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
+
+                try
+                    delete(obj.surface_mesh);
+                catch
+                    % do nothing if already deleted
+                end
+
+                obj.surface_mesh = meshm(obj.stability, obj.R, Parent=obj.ax, Tag="Stability");
+                obj.surface_mesh.UserData.ZOrder = 0;
+                obj.surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
                 colormap(obj.ax, "summer");
                 clim(obj.ax, "auto");
                 % if obj.projection ~= "globe"
