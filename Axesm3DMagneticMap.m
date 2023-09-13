@@ -169,16 +169,13 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             obj.surface_mesh_type = surface_mesh_type;
             switch obj.surface_mesh_type
                 case "terrain"
-                    % plot an opaque terrain mesh
+                    % plot a terrain mesh
                     load("topo60c.mat", "topo60c", "topo60cR");
-                    Z = zeros(obj.R.RasterSize);
-                    obj.surface_mesh(1) = meshm(Z, obj.R, Parent=obj.ax, Tag="White Under Terrain", FaceColor='w');  % first plot an opaque white mesh
-                    obj.surface_mesh(2) = geoshow(topo60c, topo60cR, Parent=obj.ax, Tag="Terrain", DisplayType="texturemap", FaceAlpha=0.6);  % second plot the terrain mesh, made transparent to lighten the colors
-                    obj.surface_mesh(1).UserData.ZOrder = -1;
-                    obj.surface_mesh(2).UserData.ZOrder = 0;
-                    obj.surface_mesh(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
-                    obj.surface_mesh(2).ButtonDownFcn = '';  % disable default binding to uimaptbx
+                    obj.surface_mesh = geoshow(topo60c, topo60cR, Parent=obj.ax, Tag="Terrain", DisplayType="texturemap");
+                    obj.surface_mesh.UserData.ZOrder = 0;
+                    obj.surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
                     [cm, cl] = demcmap(topo60c);
+                    cm = 1 - (1 - cm) * 0.5;  % lighten the colormap
                     colormap(obj.ax, cm);
                     clim(obj.ax, cl);
                     obj.coastline_plot.Color = 'w';
