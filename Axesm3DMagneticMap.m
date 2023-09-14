@@ -93,8 +93,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             [obj.dlonI, obj.dlatI] = gradient(obj.magmodel.samples.I_INCL);
             [obj.dlonF, obj.dlatF] = gradient(obj.magmodel.samples.F_TOTAL);
 
-            % obj.SetMesh("terrain");
-            % obj.SetMesh("orthogonality");
+            % obj.SetSurfaceMesh("terrain");
+            % obj.SetSurfaceMesh("orthogonality");
             obj.SetSurfaceMesh("stability");
 
             obj.SetVectorField("none");
