@@ -478,6 +478,31 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             %CENTER3DCAMERAONAGENT Move the 3D camera to the latest agent position
             obj.Set3DCameraPosition(obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end));
         end
+
+        function setm(obj, varargin)
+            %SETM Wrapper for Mapping Toolbox's setm that preserves ZOrder data
+            %  Without this, the direct use of the Mapping Toolbox's setm
+            %  will copy most plot elements without copying UserData,
+            %  thereby erasing most ZOrder data.
+
+            % store the current zorders
+            zorders = nan(1, length(obj.ax.Children));
+            for i = 1:length(obj.ax.Children)
+                try
+                    zorders(i) = obj.ax.Children(i).UserData.ZOrder;
+                catch
+                    zorders(i) = 1;  % default
+                end
+            end
+
+            % execute setm, which will erase most zorders
+            setm(obj.ax, varargin{:});
+
+            % restore the original zorders
+            for i = 1:length(obj.ax.Children)
+                obj.ax.Children(i).UserData.ZOrder = zorders(i);
+            end
+        end
     end
 end
 
