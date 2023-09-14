@@ -11,6 +11,8 @@ classdef (Abstract) AbstractMagneticMap < handle
         start
         goal
         position
+        level_curves
+        level_curves_type
     end
 
     methods (Abstract)
@@ -25,114 +27,261 @@ classdef (Abstract) AbstractMagneticMap < handle
             obj.magmodel = magmodel;
             obj.agent = agent;
             obj.InitializeAxes(parent);
-            obj.AddContourPlots;
+            obj.SetLevelCurves("contours");
+            % obj.SetLevelCurves("nullclines");
             obj.AddAgentPlots;
+
+            addlistener(obj.agent, "NavigationChanged", @obj.DrawNullclinePlots);
+            addlistener(obj.agent, "GoalChanged", @obj.DrawNullclinePlots);
         end
 
-        function AddContourPlots(obj)
-            %ADDCONTOURPLOTS Add magnetic property contours to map
+        function SetLevelCurves(obj, level_curves_type)
+            %SETLEVELCURVES ...
 
-            interpm_maxdiff = 1;  % degrees (or nan to skip contour interpolation)
-            % interpm_maxdiff = nan;  % degrees (or nan to skip contour interpolation)
+            obj.level_curves_type = level_curves_type;
+            switch obj.level_curves_type
+                case "none"
+                    delete(obj.level_curves); obj.level_curves = [];
+                case "contours"
+                    obj.DrawContourPlots();
+                case "nullclines"
+                    obj.DrawNullclinePlots();
+            end
+        end
 
-            % add contours
-            for param = ["I_INCL", "F_TOTAL"]
-                contour_table = obj.magmodel.contour_tables.(param);
-                nContours = max(contour_table.Group);
+        function DrawContourPlots(obj)
+            %DRAWCONTOURPLOTS Add magnetic property contours to map
 
-                % plot each contour level one at a time
-                for i = 1:nContours
-                    gidx = contour_table.Group == i;
-                    level = unique(contour_table.Level(gidx));
+            if obj.level_curves_type == "contours"
+                delete(obj.level_curves); obj.level_curves = [];
 
-                    % set line width
-                    linewidth = 0.5;  % default
-                    switch param
-                        case "I_INCL"
-                            if mod(level, 30) == 0
-                                linewidth = 3;  % multiples of 30 degrees
-                            else
-                                if mod(level, 10) == 0
-                                    linewidth = 2;  % multiples of 10 degrees
+                interpm_maxdiff = 1;  % degrees (or nan to skip contour interpolation)
+                % interpm_maxdiff = nan;  % degrees (or nan to skip contour interpolation)
+    
+                % add contours
+                for param = ["I_INCL", "F_TOTAL"]
+                    contour_table = obj.magmodel.contour_tables.(param);
+                    nContours = max(contour_table.Group);
+    
+                    % plot each contour level one at a time
+                    for i = 1:nContours
+                        gidx = contour_table.Group == i;
+                        level = unique(contour_table.Level(gidx));
+    
+                        % set line width
+                        linewidth = 0.5;  % default
+                        switch param
+                            case "I_INCL"
+                                if mod(level, 30) == 0
+                                    linewidth = 3;  % multiples of 30 degrees
+                                else
+                                    if mod(level, 10) == 0
+                                        linewidth = 2;  % multiples of 10 degrees
+                                    end
                                 end
-                            end
-                        case "F_TOTAL"
-                            if mod(level, 10) == 0
-                                linewidth = 2;  % multiples of 10 microtesla
-                            end
+                            case "F_TOTAL"
+                                if mod(level, 10) == 0
+                                    linewidth = 2;  % multiples of 10 microtesla
+                                end
+                        end
+    
+                        % set color
+                        color = 'k';  % default
+                        switch param
+                            case "I_INCL"
+                                % color = "#02B187";  % green from Taylor (2018)
+                                color = "#EEEEEE";  % light gray
+                                if level == 0
+                                    color = '#FF8080';  % light red, magnetic equator
+                                end
+                            case "F_TOTAL"
+                                % color = "#8212B4";  % purple from Taylor (2018)
+                                color = "#444444";  % dark gray
+                        end
+    
+                        % set zorder
+                        zorder = 2;
+                        switch param
+                            case "I_INCL"
+                                zorder = 2.1;
+                            case "F_TOTAL"
+                                zorder = 2.2;
+                        end
+    
+                        % get contour line coordinates
+                        contour_lat = contour_table.Y(gidx);
+                        contour_lon = contour_table.X(gidx);
+                        if ~isnan(interpm_maxdiff)
+                            % interpolate points on the contour line if necessary
+                            [contour_lat, contour_lon] = interpm(contour_lat, contour_lon, interpm_maxdiff, 'gc');
+                        end
+    
+                        % prepare data tooltips and other metadata
+                        %   note: lines can be accessed later via tags, e.g., findobj(obj.ax, "Tag", "I_INCL = 0")
+                        tag = [char(string(param)), ' = ', char(string(level))];
+                        datatipvalues = level*ones(size(contour_lat));
+                        datatiplabel = param.replace('_', '\_');  % default
+                        datatipformat = 'auto';  % default
+                        switch param
+                            case "I_INCL"
+                                datatiplabel = "Inclination";
+                                datatipformat = 'degrees';
+                            case "F_TOTAL"
+                                datatiplabel = "Intensity";
+                                datatipformat = '%g μT';
+                        end
+    
+                        % plot contour line
+                        line = obj.AddLine( ...
+                            contour_lat, contour_lon, ...
+                            '-', LineWidth=linewidth, Color=color, ...
+                            Tag=tag, ZOrder=zorder ...
+                            );
+                        if isprop(line, "DataTipTemplate")
+                            % add tooltips if the axes support them
+                            line.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow(datatiplabel, datatipvalues, datatipformat);
+                        end
+                        obj.level_curves(end+1) = line;
                     end
+                end
+    
+                % update graphics layering
+                obj.SortZStack();
+            end
+        end
 
-                    % set color
-                    color = 'k';  % default
+        function DrawNullclinePlots(obj, ~, ~)
+            %DRAWNULLCLINEPLOTS Add velocity nullclines to map
+
+            if obj.level_curves_type == "nullclines"
+                delete(obj.level_curves); obj.level_curves = [];
+                
+                interpm_maxdiff = 1;  % degrees (or nan to skip contour interpolation)
+                % interpm_maxdiff = nan;  % degrees (or nan to skip contour interpolation)
+    
+                goal_I = obj.agent.goal_I_INCL;
+                goal_F = obj.agent.goal_F_TOTAL;
+    
+                lat = obj.magmodel.sample_latitudes;
+                lon = obj.magmodel.sample_longitudes;
+                % sample_resolution = 0.5;
+                % lat = -90:sample_resolution:90;
+                % lon = -180:sample_resolution:180;
+                dlat = nan(length(lat), length(lon));
+                dlon = nan(length(lat), length(lon));
+    
+                % sample velocity globally
+                for i = 1:length(lat)
+                    for j = 1:length(lon)
+                        I = obj.magmodel.samples.I_INCL(i, j);
+                        F = obj.magmodel.samples.F_TOTAL(i, j);
+                        % [~, ~, ~, ~, ~, I, F] = obj.magmodel.EvaluateModel(lat(i), lon(j));
+                        velocity = obj.agent.ComputeVelocity(goal_I, goal_F, I, F);
+                        dlon(i, j) = velocity(1);
+                        dlat(i, j) = velocity(2);
+                    end
+                end
+    
+                % locate velocity nullclines (velocity contours with level 0)
+                dlat_contours = contourc(lon, lat, dlat, -1e6:1e6:1e6);  % contourc won't allow simply [0]
+                dlon_contours = contourc(lon, lat, dlon, -1e6:1e6:1e6);  % contourc won't allow simply [0]
+                dlat_table = getContourLineCoordinates(dlat_contours);
+                dlon_table = getContourLineCoordinates(dlon_contours);
+    
+                % collect nullcline coordinates
+                dlat_x = [];
+                dlat_y = [];
+                dlon_x = [];
+                dlon_y = [];
+                for param = ["dlat", "dlon"]
                     switch param
-                        case "I_INCL"
-                            % color = "#02B187";  % green from Taylor (2018)
-                            color = "#EEEEEE";  % light gray
-                            if level == 0
-                                color = '#FF8080';  % light red, magnetic equator
-                            end
-                        case "F_TOTAL"
-                            % color = "#8212B4";  % purple from Taylor (2018)
-                            color = "#444444";  % dark gray
+                        case "dlat"
+                            contour_table = dlat_table;
+                        case "dlon"
+                            contour_table = dlon_table;
                     end
+                    nContours = max(contour_table.Group);
+    
+                    % plot each contour level one at a time
+                    for i = 1:nContours
+                        gidx = contour_table.Group == i;
+    
+                        % get nullcline coordinates
+                        contour_lat = contour_table.Y(gidx);
+                        contour_lon = contour_table.X(gidx);
+                        if ~isnan(interpm_maxdiff)
+                            % interpolate points on the contour line if necessary
+                            [contour_lat, contour_lon] = interpm(contour_lat, contour_lon, interpm_maxdiff, 'gc');
+                        end
 
-                    % set zorder
-                    zorder = 2;
-                    switch param
-                        case "I_INCL"
-                            zorder = 2.1;
-                        case "F_TOTAL"
-                            zorder = 2.2;
+                        % store coordinates for equilibria detection
+                        % - nan is appended to each contour line to prevent
+                        %   spurious intersection detection at nullcline
+                        %   discontinuities
+                        switch param
+                            case "dlat"
+                                dlat_x = [dlat_x; contour_lon; nan];
+                                dlat_y = [dlat_y; contour_lat; nan];
+                            case "dlon"
+                                dlon_x = [dlon_x; contour_lon; nan];
+                                dlon_y = [dlon_y; contour_lat; nan];
+                        end
                     end
+                end
 
-                    % get contour line coordinates
-                    contour_lat = contour_table.Y(gidx);
-                    contour_lon = contour_table.X(gidx);
-                    if ~isnan(interpm_maxdiff)
-                        % interpolate points on the contour line if necessary
-                        [contour_lat, contour_lon] = interpm(contour_lat, contour_lon, interpm_maxdiff, 'gc');
-                    end
+                % plot x-nullcline (E/W-nullcline, dlon=0)
+                color = "#444444";  % dark gray
+                tag = "Nullcline dlon = 0";
+                datatiplabel = "NULLCLINE (E/W speed = 0)";
+                line = obj.AddLine( ...
+                    dlon_y, dlon_x, ...
+                    '-', LineWidth=2, Color=color, ...
+                    Tag=tag, ZOrder=2.2 ...
+                    );
+                if isprop(line, "DataTipTemplate")
+                    % add tooltips if the axes support them
+                    line.DataTipTemplate.DataTipRows = [dataTipTextRow(datatiplabel, ''); line.DataTipTemplate.DataTipRows];
+                end
+                obj.level_curves(end+1) = line;
 
-                    % prepare data tooltips and other metadata
-                    %   note: lines can be accessed later via tags, e.g., findobj(obj.ax, "Tag", "I_INCL = 0")
-                    tag = [char(string(param)), ' = ', char(string(level))];
-                    datatipvalues = level*ones(size(contour_lat));
-                    datatiplabel = param.replace('_', '\_');  % default
-                    datatipformat = 'auto';  % default
-                    switch param
-                        case "I_INCL"
-                            datatiplabel = "Inclination";
-                            datatipformat = 'degrees';
-                        case "F_TOTAL"
-                            datatiplabel = "Intensity";
-                            datatipformat = '%g μT';
-                    end
+                % plot y-nullcline (N/S nullcline, dlat=0)
+                color = "#EEEEEE";  % light gray
+                tag = "Nullcline dlat = 0";
+                datatiplabel = "NULLCLINE (N/S speed = 0)";
+                line = obj.AddLine( ...
+                    dlat_y, dlat_x, ...
+                    '-', LineWidth=2, Color=color, ...
+                    Tag=tag, ZOrder=2.1 ...
+                    );
+                if isprop(line, "DataTipTemplate")
+                    % add tooltips if the axes support them
+                    line.DataTipTemplate.DataTipRows = [dataTipTextRow(datatiplabel, ''); line.DataTipTemplate.DataTipRows];
+                end
+                obj.level_curves(end+1) = line;
 
-                    % plot contour line
+                % locate equilibria at the intersections of nullclines
+                [intersections_lon, intersections_lat] = polyxpoly(dlat_x, dlat_y, dlon_x, dlon_y);
+                % disp("eq pt lat   eq pt lon");
+                % disp([intersections_lat, intersections_lon]);
+    
+                % plot nullclines intersections
+                try
                     line = obj.AddLine( ...
-                        contour_lat, contour_lon, ...
-                        '-', LineWidth=linewidth, Color=color, ...
-                        Tag=tag, ZOrder=zorder ...
+                            intersections_lat, intersections_lon, ...
+                            'ro', MarkerSize=3, LineWidth=2, ...
+                            Tag="Nullclines Intersections", ZOrder=2.3 ...
                         );
                     if isprop(line, "DataTipTemplate")
                         % add tooltips if the axes support them
-                        line.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow(datatiplabel, datatipvalues, datatipformat);
+                        line.DataTipTemplate.DataTipRows = [dataTipTextRow('FIXED POINT', ''); line.DataTipTemplate.DataTipRows];
                     end
+                    obj.level_curves(end+1) = line;
+                catch
+                    % will fail if there are no intersections
                 end
-            end
-
-            % update graphics layering
-            obj.SortZStack();
-        end
-
-        function RemoveContourPlots(obj)
-            %REMOVECONTOURPLOTS Remove magnetic property contours from map
-            children = obj.ax.Children;
-            for i = length(children):-1:1
-                tag = children(i).Tag;
-                if contains(tag, "I_INCL = ") || contains (tag, "F_TOTAL = ")
-                    delete(children(i));
-                end
+    
+                % update graphics layering
+                obj.SortZStack();
             end
         end
 
@@ -152,7 +301,7 @@ classdef (Abstract) AbstractMagneticMap < handle
                 '-', Tag="Agent Trajectory", LineWidth=linewidth, Color=color, Marker='none', MarkerSize=2, ZOrder=10);
 
             % plot markers for agent start, goal, and current position
-            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'bo', Tag="Agent Start", MarkerSize=8, LineWidth=2,ZOrder=11);
+            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'bo', Tag="Agent Start", MarkerSize=8, LineWidth=2, ZOrder=11);
             obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'go', Tag="Agent Goal", MarkerSize=8, LineWidth=2, ZOrder=12);
             obj.position = obj.AddLine(obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'mo', Tag="Agent Position", MarkerSize=8, LineWidth=2, ZOrder=13);
 
