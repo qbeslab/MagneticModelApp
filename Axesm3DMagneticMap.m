@@ -9,10 +9,6 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         R
         lat
         lon
-        dlatI
-        dlonI
-        dlatF
-        dlonF
         orthogonality
         stability
         surface_mesh
@@ -89,9 +85,6 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
             obj.R = georefpostings([-90, 90], [-180, 180], obj.magmodel.sample_resolution, obj.magmodel.sample_resolution);
             [obj.lat, obj.lon] = obj.R.geographicGrid();
-
-            [obj.dlonI, obj.dlatI] = gradient(obj.magmodel.samples.I_INCL);
-            [obj.dlonF, obj.dlatF] = gradient(obj.magmodel.samples.F_TOTAL);
 
             % obj.SetSurfaceMesh("terrain");
             % obj.SetSurfaceMesh("orthogonality");
@@ -227,8 +220,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             obj.orthogonality = nan(obj.R.RasterSize);
             for i = 1:length(obj.magmodel.sample_latitudes)
                 for j = 1:length(obj.magmodel.sample_longitudes)
-                    dI = [obj.dlatI(i, j); obj.dlonI(i, j)];
-                    dF = [obj.dlatF(i, j); obj.dlonF(i, j)];
+                    dI = obj.magmodel.sample_gradients.I_INCL(:, i, j);
+                    dF = obj.magmodel.sample_gradients.F_TOTAL(:, i, j);
                     angle = acosd(dot(dI, dF)/(norm(dI) * norm(dF)));
                     if angle > 90
                         % result will be between 0 and 90 degrees
@@ -245,8 +238,11 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             obj.stability = nan(obj.R.RasterSize);
             for i = 1:length(obj.magmodel.sample_latitudes)
                 for j = 1:length(obj.magmodel.sample_longitudes)
-                    jacobian = -obj.agent.A * [obj.dlonF(i, j), obj.dlatF(i, j);
-                                               obj.dlonI(i, j), obj.dlatI(i, j)];
+                    dFdx = obj.magmodel.sample_gradients.F_TOTAL(1, i, j);
+                    dFdy = obj.magmodel.sample_gradients.F_TOTAL(2, i, j);
+                    dIdx = obj.magmodel.sample_gradients.I_INCL(1, i, j);
+                    dIdy = obj.magmodel.sample_gradients.I_INCL(2, i, j);
+                    jacobian = -obj.agent.A * [dFdx, dFdy; dIdx, dIdy];
                     ev = eig(jacobian);
                     evreal = real(ev);
                     evimag = imag(ev);
@@ -260,10 +256,6 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     % b = obj.agent.A(1, 2);
                     % c = obj.agent.A(2, 1);
                     % d = obj.agent.A(2, 2);
-                    % dFdx = obj.dlonF(i, j);
-                    % dFdy = obj.dlatF(i, j);
-                    % dIdx = obj.dlonI(i, j);
-                    % dIdy = obj.dlatI(i, j);
                     % trJ = -(a * dFdx + b * dIdx + c * dFdy + d * dIdy);
                     % detJ = (a * d - b * c) * (dFdx * dIdy - dFdy * dIdx);
                     % ev2 = [(trJ - sqrt(trJ^2 - 4 * detJ)) / 2;
@@ -412,13 +404,17 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
                 delete(obj.vector_field);
 
-                % by scaling the gradients manually and passing 0 to
+                % by scaling the gradients manually here and passing 0 to
                 % quiverm's scale parameter, we ensures inclination and
                 % intensity gradients are on an identical custom scale
                 scale = 0.5;
+                dIdx = scale * squeeze(obj.magmodel.sample_gradients.I_INCL(1, :, :));
+                dIdy = scale * squeeze(obj.magmodel.sample_gradients.I_INCL(2, :, :));
+                dFdx = scale * squeeze(obj.magmodel.sample_gradients.F_TOTAL(1, :, :));
+                dFdy = scale * squeeze(obj.magmodel.sample_gradients.F_TOTAL(2, :, :));
 
                 % draw inclination gradient
-                h = quiverm(obj.lat, obj.lon, obj.dlatI * scale, obj.dlonI * scale, '-', 0);
+                h = quiverm(obj.lat, obj.lon, dIdy, dIdx, '-', 0);
                 color = "#EEEEEE";
                 h(1).Color = color;
                 h(2).Color = color;
@@ -432,7 +428,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 obj.vector_field(2) = h(2);
     
                 % draw intensity gradient
-                h = quiverm(obj.lat, obj.lon, obj.dlatF * scale, obj.dlonF * scale, '-', 0);
+                h = quiverm(obj.lat, obj.lon, dFdy, dFdx, '-', 0);
                 color = "#444444";
                 h(1).Color = color;
                 h(2).Color = color;

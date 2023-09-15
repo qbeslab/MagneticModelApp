@@ -13,6 +13,7 @@ classdef MagneticModel < handle
         sample_latitudes (:,1) double
         sample_longitudes (:,1) double
         samples struct
+        sample_gradients struct
         contour_levels struct
         contour_tables struct
     end
@@ -50,6 +51,11 @@ classdef MagneticModel < handle
                 I_INCL=s, ...
                 F_TOTAL=s);
 
+            s = nan(2, length(obj.sample_latitudes), length(obj.sample_longitudes));
+            obj.sample_gradients = struct( ...
+                I_INCL = s, ...
+                F_TOTAL = s);
+
             obj.contour_levels = struct( ...
                 I_INCL = -90:5:90, ... degrees
                 F_TOTAL = 0:1:70 ... microtesla
@@ -60,6 +66,7 @@ classdef MagneticModel < handle
 
             obj.PopulateSamples();
             obj.ComputeContours();
+            obj.ComputeGradients();
         end
 
         function [X, Y, Z, H, D, I, F] = EvaluateModel(obj, lat, lon)
@@ -76,6 +83,27 @@ classdef MagneticModel < handle
             Z = Z/1000;
             H = H/1000;
             F = F/1000;
+        end
+
+        function [dFdx, dFdy, dIdx, dIdy] = EstimateGradients(obj, lat, lon, ddeg)
+            %ESTIMATEGRADIENTS Estimate the intensity and inclination graditents at a location
+
+            if nargin == 3
+                ddeg = 1e-3;
+            end
+
+            % sample at location
+            [~, ~, ~, ~, ~, I1, F1] = obj.EvaluateModel(lat, lon);
+
+            % sample at a greater longitude (+x, east)
+            [~, ~, ~, ~, ~, I2, F2] = obj.EvaluateModel(lat, lon + ddeg);
+            dFdx = (F2 - F1) / ddeg;
+            dIdx = (I2 - I1) / ddeg;
+
+            % sample at a greater latitude (+y, north)
+            [~, ~, ~, ~, ~, I2, F2] = obj.EvaluateModel(lat + ddeg, lon);
+            dFdy = (F2 - F1) / ddeg;
+            dIdy = (I2 - I1) / ddeg;
         end
 
         function PopulateSamples(obj)
@@ -105,25 +133,15 @@ classdef MagneticModel < handle
             end
         end
 
-        function [dFx, dFy, dIx, dIy] = EstimateGradients(obj, lat, lon, ddeg)
-            %ESTIMATEGRADIENTS Estimate the intensity and inclination graditents at a location
-
-            if nargin == 3
-                ddeg = 1e-3;
+        function ComputeGradients(obj)
+            %COMPUTEGRADIENTS Compute magnetic field property gradients
+            for i = 1:length(obj.sample_latitudes)
+                for j = 1:length(obj.sample_longitudes)
+                    [dFdx, dFdy, dIdx, dIdy] = obj.EstimateGradients(obj.sample_latitudes(i), obj.sample_longitudes(j));
+                    obj.sample_gradients.F_TOTAL(:, i, j) = [dFdx, dFdy];
+                    obj.sample_gradients.I_INCL(:, i, j) = [dIdx, dIdy];
+                end
             end
-
-            % sample at location
-            [~, ~, ~, ~, ~, I1, F1] = obj.EvaluateModel(lat, lon);
-
-            % sample at a greater longitude (+x, east)
-            [~, ~, ~, ~, ~, I2, F2] = obj.EvaluateModel(lat, lon + ddeg);
-            dFx = (F2 - F1) / ddeg;
-            dIx = (I2 - I1) / ddeg;
-
-            % sample at a greater latitude (+y, north)
-            [~, ~, ~, ~, ~, I2, F2] = obj.EvaluateModel(lat + ddeg, lon);
-            dFy = (F2 - F1) / ddeg;
-            dIy = (I2 - I1) / ddeg;
         end
     end
 end
