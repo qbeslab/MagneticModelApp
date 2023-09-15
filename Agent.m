@@ -5,6 +5,7 @@ classdef Agent < handle
 
     properties
         magmodel MagneticModel
+        verbose matlab.lang.OnOffSwitchState
         start_lat double
         start_lon double
         goal_lat double
@@ -30,10 +31,16 @@ classdef Agent < handle
     end
     
     methods
-        function obj = Agent(magmodel)
+        function obj = Agent(magmodel, verbose)
             %AGENT Construct an instance of this class
 
             obj.magmodel = magmodel;
+            if nargin == 2
+                obj.verbose = verbose;
+            else
+                obj.verbose = 'off';  % default
+            end
+
             % obj.SetStart(41.5015, -81.6072);  % Cleveland
             obj.SetStart(-5.2367, -35.4049);  % Brazil coast
             obj.SetGoal(-7.923, -14.407);  % Ascension Island
@@ -55,9 +62,11 @@ classdef Agent < handle
             obj.start_I_INCL = I;
             obj.start_F_TOTAL = F;
 
-            disp('=== START SET ===')
-            disp(['Latitude: ', char(string(obj.start_lat)), '  Longitude: ', char(string(obj.start_lon))]);
-            disp(['Inclination: ', char(string(round(obj.start_I_INCL, 2))), '°  Intensity: ', char(string(round(obj.start_F_TOTAL, 2))), ' μT']);
+            if obj.verbose
+                disp('=== START SET ===')
+                disp(['Latitude: ', char(string(obj.start_lat)), '  Longitude: ', char(string(obj.start_lon))]);
+                disp(['Inclination: ', char(string(round(obj.start_I_INCL, 2))), '°  Intensity: ', char(string(round(obj.start_F_TOTAL, 2))), ' μT']);
+            end
 
             notify(obj, "StartChanged");
         end
@@ -71,9 +80,11 @@ classdef Agent < handle
             obj.goal_I_INCL = I;
             obj.goal_F_TOTAL = F;
 
-            disp('=== GOAL SET ===')
-            disp(['Latitude: ', char(string(obj.goal_lat)), '  Longitude: ', char(string(obj.goal_lon))]);
-            disp(['Inclination: ', char(string(round(obj.goal_I_INCL, 2))), '°  Intensity: ', char(string(round(obj.goal_F_TOTAL, 2))), ' μT']);
+            if obj.verbose
+                disp('=== GOAL SET ===')
+                disp(['Latitude: ', char(string(obj.goal_lat)), '  Longitude: ', char(string(obj.goal_lon))]);
+                disp(['Inclination: ', char(string(round(obj.goal_I_INCL, 2))), '°  Intensity: ', char(string(round(obj.goal_F_TOTAL, 2))), ' μT']);
+            end
 
             notify(obj, "GoalChanged");
         end

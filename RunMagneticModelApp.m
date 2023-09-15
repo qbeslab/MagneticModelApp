@@ -22,6 +22,7 @@ else
     save("magmodel.mat", "magmodel");
 end
 
-agent = Agent(magmodel);
+verbose = 'on';
+agent = Agent(magmodel, verbose);
 
 app = MagneticMapApp(magmodel, agent);
