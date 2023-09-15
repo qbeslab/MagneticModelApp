@@ -18,7 +18,7 @@ classdef MagneticModel < handle
     end
 
     methods
-        function obj = MagneticModel()
+        function obj = MagneticModel(sample_resolution)
             %MAGNETICMODEL Construct an instance of this class
 
             obj.model_func = @wrldmagm; obj.version = "2020";  % faster, lesser temporal scope
@@ -26,12 +26,17 @@ classdef MagneticModel < handle
             obj.decimal_year = decyear("2020-01-01");
             obj.height = 0;  % altitude in meters
 
-            % obj.sample_resolution = 8;  % very coarse
-            % obj.sample_resolution = 4;  % coarse
-            % obj.sample_resolution = 2;  % medium
-            obj.sample_resolution = 1;  % fine
-            % obj.sample_resolution = 0.5;  % very fine
-            % obj.sample_resolution = 0.25;  % ultra fine
+            if nargin == 1
+                obj.sample_resolution = sample_resolution;
+            else
+                % default value
+                % obj.sample_resolution = 8;  % very coarse
+                % obj.sample_resolution = 4;  % coarse
+                % obj.sample_resolution = 2;  % medium
+                obj.sample_resolution = 1;  % fine
+                % obj.sample_resolution = 0.5;  % very fine
+                % obj.sample_resolution = 0.25;  % ultra fine
+            end
 
             obj.sample_latitudes = -90:obj.sample_resolution:90;
             obj.sample_longitudes = -180:obj.sample_resolution:180;
