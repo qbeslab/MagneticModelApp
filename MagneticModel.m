@@ -14,6 +14,7 @@ classdef MagneticModel < handle
         sample_longitudes (:,1) double
         samples struct
         sample_gradients struct
+        sample_orthogonality (:,:) double
         contour_levels struct
         contour_tables struct
     end
@@ -56,6 +57,8 @@ classdef MagneticModel < handle
                 I_INCL = s, ...
                 F_TOTAL = s);
 
+            obj.sample_orthogonality = nan(length(obj.sample_latitudes), length(obj.sample_longitudes));
+
             obj.contour_levels = struct( ...
                 I_INCL = -90:5:90, ... degrees
                 F_TOTAL = 0:1:70 ... microtesla
@@ -67,6 +70,7 @@ classdef MagneticModel < handle
             obj.PopulateSamples();
             obj.ComputeContours();
             obj.ComputeGradients();
+            obj.ComputeOrthogonality();
         end
 
         function [X, Y, Z, H, D, I, F] = EvaluateModel(obj, lat, lon)
@@ -140,6 +144,22 @@ classdef MagneticModel < handle
                     [dFdx, dFdy, dIdx, dIdy] = obj.EstimateGradients(obj.sample_latitudes(i), obj.sample_longitudes(j));
                     obj.sample_gradients.F_TOTAL(:, i, j) = [dFdx, dFdy];
                     obj.sample_gradients.I_INCL(:, i, j) = [dIdx, dIdy];
+                end
+            end
+        end
+
+        function ComputeOrthogonality(obj)
+            %COMPUTEORTHOGONALITY Compute the angle in degrees between gradient vectors for inclination and intensity
+            for i = 1:length(obj.sample_latitudes)
+                for j = 1:length(obj.sample_longitudes)
+                    dI = obj.sample_gradients.I_INCL(:, i, j);
+                    dF = obj.sample_gradients.F_TOTAL(:, i, j);
+                    angle = acosd(dot(dI, dF)/(norm(dI) * norm(dF)));
+                    if angle > 90
+                        % result will be between 0 and 90 degrees
+                        angle = 180 - angle;
+                    end
+                    obj.sample_orthogonality(i, j) = angle;
                 end
             end
         end

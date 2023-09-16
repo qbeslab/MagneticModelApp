@@ -9,7 +9,6 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         R
         lat
         lon
-        orthogonality
         stability
         surface_mesh
         surface_mesh_type
@@ -178,8 +177,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             
                 case "orthogonality"
                     % plot orthogonality as a color map
-                    obj.CalculateOrthogonality();
-                    obj.surface_mesh = meshm(obj.orthogonality, obj.R, Parent=obj.ax, Tag="Orthogonality");
+                    obj.surface_mesh = meshm(obj.magmodel.sample_orthogonality, obj.R, Parent=obj.ax, Tag="Orthogonality");
                     obj.surface_mesh.UserData.ZOrder = 0;
                     obj.surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
                     colormap(obj.ax, "default");
@@ -212,23 +210,6 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 case "gradients"
                     % plot two sets of arrows showing the gradients of the inclination and intensity
                     obj.DrawIFGradients();
-            end
-        end
-
-        function CalculateOrthogonality(obj)
-            %CALCULATEORTHOGONALITY ...
-            obj.orthogonality = nan(obj.R.RasterSize);
-            for i = 1:length(obj.magmodel.sample_latitudes)
-                for j = 1:length(obj.magmodel.sample_longitudes)
-                    dI = obj.magmodel.sample_gradients.I_INCL(:, i, j);
-                    dF = obj.magmodel.sample_gradients.F_TOTAL(:, i, j);
-                    angle = acosd(dot(dI, dF)/(norm(dI) * norm(dF)));
-                    if angle > 90
-                        % result will be between 0 and 90 degrees
-                        angle = 180 - angle;
-                    end
-                    obj.orthogonality(i, j) = angle;
-                end
             end
         end
 
