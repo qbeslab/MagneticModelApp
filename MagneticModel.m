@@ -43,34 +43,15 @@ classdef MagneticModel < handle
             obj.sample_latitudes = -90:obj.sample_resolution:90;
             obj.sample_longitudes = -180:obj.sample_resolution:180;
 
-            s = nan(length(obj.sample_latitudes), length(obj.sample_longitudes));
-            % obj.samples = struct( ...
-            %     X_NORTH=s, Y_EAST=s, Z_DOWN=s, ...
-            %     H_HORIZ=s, D_DECL=s, I_INCL=s, ...
-            %     F_TOTAL=s);
-            obj.samples = struct( ...
-                I_INCL=s, ...
-                F_TOTAL=s);
-
-            s = nan(2, length(obj.sample_latitudes), length(obj.sample_longitudes));
-            obj.sample_gradients = struct( ...
-                I_INCL = s, ...
-                F_TOTAL = s);
-
-            obj.sample_orthogonality = nan(length(obj.sample_latitudes), length(obj.sample_longitudes));
-
             obj.contour_levels = struct( ...
                 I_INCL = -90:5:90, ... degrees
                 F_TOTAL = 0:1:70 ... microtesla
                 );
-            obj.contour_tables = struct( ...
-                I_INCL=table, ...
-                F_TOTAL=table);
 
-            obj.PopulateSamples();
-            obj.ComputeContours();
-            obj.ComputeGradients();
-            obj.ComputeOrthogonality();
+            obj.samples = obj.CollectSamples();
+            obj.contour_tables = obj.ComputeContours();
+            obj.sample_gradients = obj.ComputeGradients();
+            obj.sample_orthogonality = obj.ComputeOrthogonality();
         end
 
         function [X, Y, Z, H, D, I, F] = EvaluateModel(obj, lat, lon)
@@ -110,56 +91,110 @@ classdef MagneticModel < handle
             dIdy = (I2 - I1) / ddeg;
         end
 
-        function PopulateSamples(obj)
-            %POPULATESAMPLES Collect samples of magnetic field properties at all coords
-            for i = 1:length(obj.sample_latitudes)
-                for j = 1:length(obj.sample_longitudes)
-                    % [X, Y, Z, H, D, I, F] = obj.EvaluateModel(obj.sample_latitudes(i), obj.sample_longitudes(j));
-                    [~, ~, ~, ~, ~, I, F] = obj.EvaluateModel(obj.sample_latitudes(i), obj.sample_longitudes(j));
-                    % obj.samples.X_NORTH(i, j) = X;
-                    % obj.samples.Y_EAST (i, j) = Y;
-                    % obj.samples.Z_DOWN (i, j) = Z;
-                    % obj.samples.H_HORIZ(i, j) = H;
-                    % obj.samples.D_DECL (i, j) = D;
-                    obj.samples.I_INCL (i, j) = I;
-                    obj.samples.F_TOTAL(i, j) = F;
+        function samples = CollectSamples(obj)
+            %COLLECTSAMPLES Collect samples of magnetic field properties at all coords
+
+            lat = obj.sample_latitudes;
+            lon = obj.sample_longitudes;
+            f = @obj.EvaluateModel;
+
+            s = nan(length(lat), length(lon));
+            % X_NORTH = s;
+            % Y_EAST = s;
+            % Z_DOWN = s;
+            % H_HORIZ = s;
+            % D_DECL = s;
+            I_INCL = s;
+            F_TOTAL = s;
+
+            imax = length(lat);
+            jmax = length(lon);
+            for i = 1:imax
+                for j = 1:jmax
+                    % [X, Y, Z, H, D, I, F] = f(lat(i), lon(j));
+                    [~, ~, ~, ~, ~, I, F] = f(lat(i), lon(j));
+                    % X_NORTH(i, j) = X;
+                    % Y_EAST (i, j) = Y;
+                    % Z_DOWN (i, j) = Z;
+                    % H_HORIZ(i, j) = H;
+                    % D_DECL (i, j) = D;
+                    I_INCL (i, j) = I;
+                    F_TOTAL(i, j) = F;
                 end
             end
+
+            % samples = struct( ...
+            %     X_NORTH=X_NORTH, Y_EAST=Y_EAST, Z_DOWN=Z_DOWN, ...
+            %     H_HORIZ=H_HORIZ, D_DECL=D_DECL, I_INCL=I_INCL, ...
+            %     F_TOTAL=F_TOTAL);
+            samples = struct( ...
+                I_INCL=I_INCL, ...
+                F_TOTAL=F_TOTAL);
         end
 
-        function ComputeContours(obj)
+        function contour_tables = ComputeContours(obj)
             %COMPUTECONTOURS Compute magnetic field property contours
+
+            contour_tables = struct( ...
+                I_INCL=table, ...
+                F_TOTAL=table);
+
             contour_names = fieldnames(obj.contour_levels);
             for i = 1:length(contour_names)
                 param = contour_names{i};
                 contour_matrix = contourc(obj.sample_longitudes, obj.sample_latitudes, obj.samples.(param), obj.contour_levels.(param)); 
-                obj.contour_tables.(param) = getContourLineCoordinates(contour_matrix);
+                contour_tables.(param) = getContourLineCoordinates(contour_matrix);
             end
         end
 
-        function ComputeGradients(obj)
+        function sample_gradients = ComputeGradients(obj)
             %COMPUTEGRADIENTS Compute magnetic field property gradients
-            for i = 1:length(obj.sample_latitudes)
-                for j = 1:length(obj.sample_longitudes)
-                    [dFdx, dFdy, dIdx, dIdy] = obj.EstimateGradients(obj.sample_latitudes(i), obj.sample_longitudes(j));
-                    obj.sample_gradients.F_TOTAL(:, i, j) = [dFdx, dFdy];
-                    obj.sample_gradients.I_INCL(:, i, j) = [dIdx, dIdy];
+
+            lat = obj.sample_latitudes;
+            lon = obj.sample_longitudes;
+            f = @obj.EstimateGradients;
+
+            s = nan(2, length(lat), length(lon));
+            dI_INCL = s;
+            dF_TOTAL = s;
+
+            imax = length(lat);
+            jmax = length(lon);
+            for i = 1:imax
+                for j = 1:jmax
+                    [dFdx, dFdy, dIdx, dIdy] = f(lat(i), lon(j));
+                    dF_TOTAL(:, i, j) = [dFdx, dFdy];
+                    dI_INCL(:, i, j) = [dIdx, dIdy];
                 end
             end
+
+            sample_gradients = struct( ...
+                I_INCL=dI_INCL, ...
+                F_TOTAL=dF_TOTAL);
         end
 
-        function ComputeOrthogonality(obj)
+        function sample_orthogonality = ComputeOrthogonality(obj)
             %COMPUTEORTHOGONALITY Compute the angle in degrees between gradient vectors for inclination and intensity
-            for i = 1:length(obj.sample_latitudes)
-                for j = 1:length(obj.sample_longitudes)
-                    dI = obj.sample_gradients.I_INCL(:, i, j);
-                    dF = obj.sample_gradients.F_TOTAL(:, i, j);
+
+            lat = obj.sample_latitudes;
+            lon = obj.sample_longitudes;
+            dI_INCL = obj.sample_gradients.I_INCL;
+            dF_TOTAL = obj.sample_gradients.F_TOTAL;
+
+            sample_orthogonality = nan(length(lat), length(lon));
+
+            imax = length(lat);
+            jmax = length(lon);
+            for i = 1:imax
+                for j = 1:jmax
+                    dI = dI_INCL(:, i, j);
+                    dF = dF_TOTAL(:, i, j);
                     angle = acosd(dot(dI, dF)/(norm(dI) * norm(dF)));
                     if angle > 90
                         % result will be between 0 and 90 degrees
                         angle = 180 - angle;
                     end
-                    obj.sample_orthogonality(i, j) = angle;
+                    sample_orthogonality(i, j) = angle;
                 end
             end
         end
