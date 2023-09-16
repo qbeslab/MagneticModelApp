@@ -2,6 +2,8 @@ classdef (Abstract) AbstractMagneticMap < handle
     %ABSTRACTMAGNETICMAP Superclass for magnetic maps
     % Required add-ons (use MATLAB's Add-On Explorer to install):
     %   - Mapping Toolbox
+    % Optional add-ons (use MATLAB's Add-On Explorer to install):
+    %   - Parallel Computing Toolbox (install for potential speed gains)
     
     properties
         magmodel MagneticModel
@@ -164,19 +166,23 @@ classdef (Abstract) AbstractMagneticMap < handle
     
                 lat = obj.magmodel.sample_latitudes;
                 lon = obj.magmodel.sample_longitudes;
-                % sample_resolution = 0.5;
-                % lat = -90:sample_resolution:90;
-                % lon = -180:sample_resolution:180;
+
+                I_INCL = obj.magmodel.samples.I_INCL;
+                F_TOTAL = obj.magmodel.samples.F_TOTAL;
+                a = obj.agent;
+                f = @a.ComputeVelocity;
+
                 dlat = nan(length(lat), length(lon));
                 dlon = nan(length(lat), length(lon));
     
                 % sample velocity globally
-                for i = 1:length(lat)
-                    for j = 1:length(lon)
-                        I = obj.magmodel.samples.I_INCL(i, j);
-                        F = obj.magmodel.samples.F_TOTAL(i, j);
-                        % [~, ~, ~, ~, ~, I, F] = obj.magmodel.EvaluateModel(lat(i), lon(j));
-                        velocity = obj.agent.ComputeVelocity(goal_I, goal_F, I, F);
+                imax = length(lat);
+                jmax = length(lon);
+                parfor i = 1:imax
+                    for j = 1:jmax
+                        I = I_INCL(i, j);
+                        F = F_TOTAL(i, j);
+                        velocity = f(goal_I, goal_F, I, F);
                         dlon(i, j) = velocity(1);
                         dlat(i, j) = velocity(2);
                     end
