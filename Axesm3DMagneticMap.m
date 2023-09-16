@@ -2,6 +2,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
     %AXESM3DMAGNETICMAP Class for managing a 3D axesm-based plot of the magnetic environment
     % Required add-ons (use MATLAB's Add-On Explorer to install):
     %   - Mapping Toolbox
+    % Optional add-ons (use MATLAB's Add-On Explorer to install):
+    %   - Parallel Computing Toolbox (install for potential speed gains)
 
     properties
         projection
@@ -213,17 +215,25 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             end
         end
 
-        function CalculateStability(obj)
+        function stability = CalculateStability(obj)
             %CALCULATESTABILITY ...
 
-            obj.stability = nan(obj.R.RasterSize);
-            for i = 1:length(obj.magmodel.sample_latitudes)
-                for j = 1:length(obj.magmodel.sample_longitudes)
-                    dFdx = obj.magmodel.sample_gradients.F_TOTAL(1, i, j);
-                    dFdy = obj.magmodel.sample_gradients.F_TOTAL(2, i, j);
-                    dIdx = obj.magmodel.sample_gradients.I_INCL(1, i, j);
-                    dIdy = obj.magmodel.sample_gradients.I_INCL(2, i, j);
-                    jacobian = -obj.agent.A * [dFdx, dFdy; dIdx, dIdy];
+            lat = obj.magmodel.sample_latitudes;
+            lon = obj.magmodel.sample_longitudes;
+
+            A = obj.agent.A;
+            dFdx = squeeze(obj.magmodel.sample_gradients.F_TOTAL(1, :, :));
+            dFdy = squeeze(obj.magmodel.sample_gradients.F_TOTAL(2, :, :));
+            dIdx = squeeze(obj.magmodel.sample_gradients.I_INCL(1, :, :));
+            dIdy = squeeze(obj.magmodel.sample_gradients.I_INCL(2, :, :));
+
+            stability = nan(length(lat), length(lon));
+
+            imax = length(lat);
+            jmax = length(lon);
+            parfor i = 1:imax
+                for j = 1:jmax
+                    jacobian = -A * [dFdx(i, j), dFdy(i, j); dIdx(i, j), dIdy(i, j)];
                     ev = eig(jacobian);
                     evreal = real(ev);
                     evimag = imag(ev);
@@ -235,12 +245,12 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     % % check analytical form of jacobian eigenvalues
                     % % - numerical deviations can be found for eigenvalues
                     % %   near zero, especially when agent.A is large
-                    % a = obj.agent.A(1, 1);
-                    % b = obj.agent.A(1, 2);
-                    % c = obj.agent.A(2, 1);
-                    % d = obj.agent.A(2, 2);
-                    % trJ = -(a * dFdx + b * dIdx + c * dFdy + d * dIdy);
-                    % detJ = (a * d - b * c) * (dFdx * dIdy - dFdy * dIdx);
+                    % a = A(1, 1);
+                    % b = A(1, 2);
+                    % c = A(2, 1);
+                    % d = A(2, 2);
+                    % trJ = -(a * dFdx(i, j) + b * dIdx(i, j) + c * dFdy(i, j) + d * dIdy(i, j));
+                    % detJ = (a * d - b * c) * (dFdx(i, j) * dIdy(i, j) - dFdy(i, j) * dIdx(i, j));
                     % ev2 = [(trJ - sqrt(trJ^2 - 4 * detJ)) / 2;
                     %        (trJ + sqrt(trJ^2 - 4 * detJ)) / 2];
                     % is_unstable2 = trJ > tol || (detJ < 0 && abs(detJ) > tol);
@@ -278,24 +288,24 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                         % at least one eigenvalue real-part is positive: unstable (repelling)
                         if has_rotation
                             % spiral source
-                            obj.stability(i,j) = 0.75;  % light green with summer colormap
+                            stability(i,j) = 0.75;  % light green with summer colormap
                         else
                             % unstable node
-                            obj.stability(i, j) = 1;  % yellow with summer colormap
+                            stability(i, j) = 1;  % yellow with summer colormap
                         end
                     else
                         % both eigenvalue real-parts are non-positive: stable (attracting) or neutrally stable
                         if is_neutrally_stable
                             % at least one eigenvalue real-part is zero (or very close): neutrally stable
-                            obj.stability(i, j) = 0.5;
+                            stability(i, j) = 0.5;
                         else
                             % both eigenvalue real-parts are negative: stable (attracting)
                             if has_rotation
                                 % spiral sink
-                                obj.stability(i,j) = 0.25;  % medium green with summer colormap
+                                stability(i,j) = 0.25;  % medium green with summer colormap
                             else
                                 % stable node
-                                obj.stability(i, j) = 0;  % dark green with summer colormap
+                                stability(i, j) = 0;  % dark green with summer colormap
                             end
                         end
                     end
@@ -307,7 +317,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             %DRAWSTABILITYMESH ...
 
             if obj.surface_mesh_type == "stability"
-                obj.CalculateStability();
+                obj.stability = obj.CalculateStability();
                 delete(obj.surface_mesh);
                 obj.surface_mesh = meshm(obj.stability, obj.R, Parent=obj.ax, Tag="Stability");
                 obj.surface_mesh.UserData.ZOrder = 0;
