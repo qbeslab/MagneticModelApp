@@ -4,6 +4,7 @@
 %   - getContourLineCoordinates (from MathWorks File Exchange)
 % Optional add-ons (use MATLAB's Add-On Explorer to install):
 %   - MATLAB Basemap Data - colorterrain (install for offline use)
+%   - Parallel Computing Toolbox (install for potential speed gains)
 
 try
     % if app is already open, make sure the old window closes

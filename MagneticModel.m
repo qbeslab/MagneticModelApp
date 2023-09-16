@@ -3,6 +3,8 @@ classdef MagneticModel < handle
     % Required add-ons (use MATLAB's Add-On Explorer to install):
     %   - Aerospace Toolbox
     %   - getContourLineCoordinates (from MathWorks File Exchange)
+    % Optional add-ons (use MATLAB's Add-On Explorer to install):
+    %   - Parallel Computing Toolbox (install for potential speed gains)
 
     properties
         model_func function_handle
@@ -109,7 +111,7 @@ classdef MagneticModel < handle
 
             imax = length(lat);
             jmax = length(lon);
-            for i = 1:imax
+            parfor i = 1:imax
                 for j = 1:jmax
                     % [X, Y, Z, H, D, I, F] = f(lat(i), lon(j));
                     [~, ~, ~, ~, ~, I, F] = f(lat(i), lon(j));
@@ -160,7 +162,7 @@ classdef MagneticModel < handle
 
             imax = length(lat);
             jmax = length(lon);
-            for i = 1:imax
+            parfor i = 1:imax
                 for j = 1:jmax
                     [dFdx, dFdy, dIdx, dIdy] = f(lat(i), lon(j));
                     dF_TOTAL(:, i, j) = [dFdx, dFdy];
@@ -185,7 +187,7 @@ classdef MagneticModel < handle
 
             imax = length(lat);
             jmax = length(lon);
-            for i = 1:imax
+            parfor i = 1:imax
                 for j = 1:jmax
                     dI = dI_INCL(:, i, j);
                     dF = dF_TOTAL(:, i, j);
