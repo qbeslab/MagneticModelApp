@@ -350,15 +350,24 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
                 goal_I = obj.agent.goal_I_INCL;
                 goal_F = obj.agent.goal_F_TOTAL;
-            
-                dlat = nan(obj.R.RasterSize);
-                dlon = nan(obj.R.RasterSize);
-            
-                for i = 1:length(obj.magmodel.sample_latitudes)
-                    for j = 1:length(obj.magmodel.sample_longitudes)
-                        I = obj.magmodel.samples.I_INCL(i, j);
-                        F = obj.magmodel.samples.F_TOTAL(i, j);
-                        velocity = obj.agent.ComputeVelocity(goal_I, goal_F, I, F);
+                
+                lat = obj.magmodel.sample_latitudes;
+                lon = obj.magmodel.sample_longitudes;
+                I_INCL = obj.magmodel.samples.I_INCL;
+                F_TOTAL = obj.magmodel.samples.F_TOTAL;
+                agent = obj.agent;
+                f = @agent.ComputeVelocity;
+
+                dlat = nan(length(lat), length(lon));
+                dlon = nan(length(lat), length(lon));
+
+                imax = length(lat);
+                jmax = length(lon);
+                parfor i = 1:imax
+                    for j = 1:jmax
+                        I = I_INCL(i, j);
+                        F = F_TOTAL(i, j);
+                        velocity = f(goal_I, goal_F, I, F);
                         dlon(i, j) = velocity(1);
                         dlat(i, j) = velocity(2);
                     end
