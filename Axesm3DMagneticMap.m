@@ -7,8 +7,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         projection
         coastline_plot
         R
-        lat
-        lon
+        lat_mesh
+        lon_mesh
         stability
         surface_mesh
         surface_mesh_type
@@ -83,7 +83,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             obj.ax.Clipping = 'off';
 
             obj.R = georefpostings([-90, 90], [-180, 180], obj.magmodel.sample_resolution, obj.magmodel.sample_resolution);
-            [obj.lat, obj.lon] = obj.R.geographicGrid();
+            [obj.lat_mesh, obj.lon_mesh] = obj.R.geographicGrid();
 
             % obj.SetSurfaceMesh("terrain");
             % obj.SetSurfaceMesh("orthogonality");
@@ -350,7 +350,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     end
                 end
             
-                obj.vector_field = quiverm(obj.lat, obj.lon, dlat, dlon);
+                obj.vector_field = quiverm(obj.lat_mesh, obj.lon_mesh, dlat, dlon);
                 color = "#444444";
                 obj.vector_field(1).Color = color;
                 obj.vector_field(2).Color = color;
@@ -395,7 +395,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 dFdy = scale * squeeze(obj.magmodel.sample_gradients.F_TOTAL(2, :, :));
 
                 % draw inclination gradient
-                h = quiverm(obj.lat, obj.lon, dIdy, dIdx, '-', 0);
+                h = quiverm(obj.lat_mesh, obj.lon_mesh, dIdy, dIdx, '-', 0);
                 color = "#EEEEEE";
                 h(1).Color = color;
                 h(2).Color = color;
@@ -409,7 +409,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 obj.vector_field(2) = h(2);
     
                 % draw intensity gradient
-                h = quiverm(obj.lat, obj.lon, dFdy, dFdx, '-', 0);
+                h = quiverm(obj.lat_mesh, obj.lon_mesh, dFdy, dFdx, '-', 0);
                 color = "#444444";
                 h(1).Color = color;
                 h(2).Color = color;
