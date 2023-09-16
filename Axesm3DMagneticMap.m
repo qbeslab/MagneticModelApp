@@ -227,12 +227,14 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     ev = eig(jacobian);
                     evreal = real(ev);
                     evimag = imag(ev);
-                    tol = 1e-6;
+                    tol = 1e-12;
                     is_unstable = evreal(1) > tol || evreal(2) > tol;
                     is_neutrally_stable = abs(evreal(1)) < tol || abs(evreal(2)) < tol;
                     has_rotation = abs(evimag(1)) > tol || abs(evimag(2)) > tol;
 
                     % % check analytical form of jacobian eigenvalues
+                    % % - numerical deviations can be found for eigenvalues
+                    % %   near zero, especially when agent.A is large
                     % a = obj.agent.A(1, 1);
                     % b = obj.agent.A(1, 2);
                     % c = obj.agent.A(2, 1);
@@ -241,9 +243,10 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     % detJ = (a * d - b * c) * (dFdx * dIdy - dFdy * dIdx);
                     % ev2 = [(trJ - sqrt(trJ^2 - 4 * detJ)) / 2;
                     %        (trJ + sqrt(trJ^2 - 4 * detJ)) / 2];
-                    % is_unstable2 = trJ > tol || detJ < -tol;
+                    % is_unstable2 = trJ > tol || (detJ < 0 && abs(detJ) > tol);
                     % is_neutrally_stable2 = abs(detJ) < tol;
                     % has_rotation2 = trJ^2 < 4 * detJ;
+                    % format long;
                     % if norm(sort(ev) - sort(ev2)) > 1e-10
                     %     disp("significant deviation found:");
                     %     disp([i, j]);
@@ -251,7 +254,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     %     disp(norm(sort(ev) - sort(ev2)));
                     % end
                     % if is_unstable ~= is_unstable2
-                    %     disp("disagreement about stability found:");
+                    %     disp("disagreement about unstability found:");
                     %     disp([i, j]);
                     %     disp([sort(ev), sort(ev2)]);
                     %     disp([is_unstable, is_unstable2]);
@@ -262,6 +265,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     %     disp([i, j]);
                     %     disp([sort(ev), sort(ev2)]);
                     %     disp([is_neutrally_stable, is_neutrally_stable2]);
+                    %     disp([trJ, detJ]);
                     % end
                     % if has_rotation ~= has_rotation2
                     %     disp("disagreement about rotation found:");
