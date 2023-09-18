@@ -233,10 +233,9 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     ev = f(dF(:, i, j), dI(:, i, j));
                     evreal = real(ev);
                     evimag = imag(ev);
-                    tol = 1e-12;
-                    is_unstable = evreal(1) > tol || evreal(2) > tol;
-                    is_neutrally_stable = abs(evreal(1)) < tol || abs(evreal(2)) < tol;
-                    has_rotation = abs(evimag(1)) > tol || abs(evimag(2)) > tol;
+                    is_unstable = evreal(1) > 0 || evreal(2) > 0;
+                    is_degenerate = evreal(1) == 0 || evreal(2) == 0;
+                    has_rotation = evimag(1) ~= 0 || evimag(2) ~= 0;
 
                     if is_unstable
                         % at least one eigenvalue real-part is positive: unstable (repelling)
@@ -249,7 +248,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                         end
                     else
                         % both eigenvalue real-parts are non-positive: stable (attracting) or neutrally stable
-                        if is_neutrally_stable
+                        if is_degenerate
                             % at least one eigenvalue real-part is zero (or very close): neutrally stable
                             stab(i, j) = 0.5;
                         else

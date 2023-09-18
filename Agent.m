@@ -168,22 +168,22 @@ classdef Agent < handle
             dIdx = dI(1);
             dIdy = dI(2);
 
-            % find eigenvalues numerically
-            % - when eigenvalues should be exactly zero, error accumulated
-            %   with the numerical approach can sometimes result in
-            %   non-zero values, especially when agent.A is large, which is
-            %   problematic for stability classification
-            jacobian = -obj.A * [dFdx, dFdy; dIdx, dIdy];
-            ev = eig(jacobian);
-
-            % % find eigenvalues formulaically, with matrix multiplication
-            % % - this approach seems to reliably compute eigenvalues that
-            % %   should be exactly zero (e.g., when detJ is zero)
+            % % find eigenvalues numerically
+            % % - when eigenvalues should be exactly zero, error accumulated
+            % %   with the numerical approach can sometimes result in
+            % %   non-zero values, especially when agent.A is large, which is
+            % %   problematic for stability classification
             % jacobian = -obj.A * [dFdx, dFdy; dIdx, dIdy];
-            % trJ = trace(jacobian);
-            % detJ = det(jacobian);
-            % ev = [(trJ - sqrt(trJ^2 - 4 * detJ)) / 2;
-            %       (trJ + sqrt(trJ^2 - 4 * detJ)) / 2];
+            % ev = eig(jacobian);
+
+            % find eigenvalues formulaically, with matrix multiplication
+            % - this approach seems to reliably compute eigenvalues that
+            %   should be exactly zero (e.g., when detJ is zero)
+            jacobian = -obj.A * [dFdx, dFdy; dIdx, dIdy];
+            trJ = trace(jacobian);
+            detJ = det(jacobian);
+            ev = [(trJ - sqrt(trJ^2 - 4 * detJ)) / 2;
+                  (trJ + sqrt(trJ^2 - 4 * detJ)) / 2];
 
             % % find eigenvalues formulaically, without matrix multiplication
             % % - this seems to be entirely equivalent to using the build-in
