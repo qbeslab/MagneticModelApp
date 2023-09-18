@@ -214,7 +214,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             end
         end
 
-        function stability = CalculateStability(obj)
+        function CalculateStability(obj)
             %CALCULATESTABILITY ...
 
             lat = obj.magmodel.sample_latitudes;
@@ -226,7 +226,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             dIdx = squeeze(obj.magmodel.sample_gradients.I_INCL(1, :, :));
             dIdy = squeeze(obj.magmodel.sample_gradients.I_INCL(2, :, :));
 
-            stability = nan(length(lat), length(lon));
+            stab = nan(length(lat), length(lon));
 
             imax = length(lat);
             jmax = length(lon);
@@ -287,36 +287,38 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                         % at least one eigenvalue real-part is positive: unstable (repelling)
                         if has_rotation
                             % spiral source
-                            stability(i,j) = 0.75;  % light green with summer colormap
+                            stab(i,j) = 0.75;  % light green with summer colormap
                         else
                             % unstable node
-                            stability(i, j) = 1;  % yellow with summer colormap
+                            stab(i, j) = 1;  % yellow with summer colormap
                         end
                     else
                         % both eigenvalue real-parts are non-positive: stable (attracting) or neutrally stable
                         if is_neutrally_stable
                             % at least one eigenvalue real-part is zero (or very close): neutrally stable
-                            stability(i, j) = 0.5;
+                            stab(i, j) = 0.5;
                         else
                             % both eigenvalue real-parts are negative: stable (attracting)
                             if has_rotation
                                 % spiral sink
-                                stability(i,j) = 0.25;  % medium green with summer colormap
+                                stab(i,j) = 0.25;  % medium green with summer colormap
                             else
                                 % stable node
-                                stability(i, j) = 0;  % dark green with summer colormap
+                                stab(i, j) = 0;  % dark green with summer colormap
                             end
                         end
                     end
                 end
             end
+
+            obj.stability = stab;
         end
 
         function DrawStabilityMesh(obj, ~, ~)
             %DRAWSTABILITYMESH ...
 
             if obj.surface_mesh_type == "stability"
-                obj.stability = obj.CalculateStability();
+                obj.CalculateStability();
                 delete(obj.surface_mesh);
                 obj.surface_mesh = meshm(obj.stability, obj.R, Parent=obj.ax, Tag="Stability");
                 obj.surface_mesh.UserData.ZOrder = 0;

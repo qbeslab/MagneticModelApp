@@ -50,10 +50,10 @@ classdef MagneticModel < handle
                 F_TOTAL = 0:1:70 ... microtesla
                 );
 
-            obj.samples = obj.CollectSamples();
-            obj.contour_tables = obj.ComputeContours();
-            obj.sample_gradients = obj.ComputeGradients();
-            obj.sample_orthogonality = obj.ComputeOrthogonality();
+            obj.PopulateSamples();
+            obj.ComputeContours();
+            obj.ComputeGradients();
+            obj.ComputeOrthogonality();
         end
 
         function [X, Y, Z, H, D, I, F] = EvaluateModel(obj, lat, lon)
@@ -93,7 +93,7 @@ classdef MagneticModel < handle
             dIdy = (I2 - I1) / ddeg;
         end
 
-        function samples = CollectSamples(obj)
+        function PopulateSamples(obj)
             %COLLECTSAMPLES Collect samples of magnetic field properties at all coords
 
             lat = obj.sample_latitudes;
@@ -125,19 +125,19 @@ classdef MagneticModel < handle
                 end
             end
 
-            % samples = struct( ...
+            % obj.samples = struct( ...
             %     X_NORTH=X_NORTH, Y_EAST=Y_EAST, Z_DOWN=Z_DOWN, ...
             %     H_HORIZ=H_HORIZ, D_DECL=D_DECL, I_INCL=I_INCL, ...
             %     F_TOTAL=F_TOTAL);
-            samples = struct( ...
+            obj.samples = struct( ...
                 I_INCL=I_INCL, ...
                 F_TOTAL=F_TOTAL);
         end
 
-        function contour_tables = ComputeContours(obj)
+        function ComputeContours(obj)
             %COMPUTECONTOURS Compute magnetic field property contours
 
-            contour_tables = struct( ...
+            cont_tables = struct( ...
                 I_INCL=table, ...
                 F_TOTAL=table);
 
@@ -145,11 +145,13 @@ classdef MagneticModel < handle
             for i = 1:length(contour_names)
                 param = contour_names{i};
                 contour_matrix = contourc(obj.sample_longitudes, obj.sample_latitudes, obj.samples.(param), obj.contour_levels.(param)); 
-                contour_tables.(param) = getContourLineCoordinates(contour_matrix);
+                cont_tables.(param) = getContourLineCoordinates(contour_matrix);
             end
+
+            obj.contour_tables = cont_tables;
         end
 
-        function sample_gradients = ComputeGradients(obj)
+        function ComputeGradients(obj)
             %COMPUTEGRADIENTS Compute magnetic field property gradients
 
             lat = obj.sample_latitudes;
@@ -170,12 +172,12 @@ classdef MagneticModel < handle
                 end
             end
 
-            sample_gradients = struct( ...
+            obj.sample_gradients = struct( ...
                 I_INCL=dI_INCL, ...
                 F_TOTAL=dF_TOTAL);
         end
 
-        function sample_orthogonality = ComputeOrthogonality(obj)
+        function ComputeOrthogonality(obj)
             %COMPUTEORTHOGONALITY Compute the angle in degrees between gradient vectors for inclination and intensity
 
             lat = obj.sample_latitudes;
@@ -183,7 +185,7 @@ classdef MagneticModel < handle
             dI_INCL = obj.sample_gradients.I_INCL;
             dF_TOTAL = obj.sample_gradients.F_TOTAL;
 
-            sample_orthogonality = nan(length(lat), length(lon));
+            orthogonality = nan(length(lat), length(lon));
 
             imax = length(lat);
             jmax = length(lon);
@@ -196,9 +198,11 @@ classdef MagneticModel < handle
                         % result will be between 0 and 90 degrees
                         angle = 180 - angle;
                     end
-                    sample_orthogonality(i, j) = angle;
+                    orthogonality(i, j) = angle;
                 end
             end
+
+            obj.sample_orthogonality = orthogonality;
         end
     end
 end
