@@ -2,6 +2,8 @@ classdef Agent < handle
     %AGENT Class for implementing a navigating agent
     % Required add-ons (use MATLAB's Add-On Explorer to install):
     %   - Mapping Toolbox
+    % Optional add-ons (use MATLAB's Add-On Explorer to install):
+    %   - Parallel Computing Toolbox (install for potential speed gains)
 
     properties
         magmodel MagneticModel
@@ -21,6 +23,7 @@ classdef Agent < handle
         A (2,2) double = [1, 0; 0, 1]  % TODO scale properly
         max_speed double = 1/10  % TODO scale properly
         time_step double = 1
+        sample_velocities (:,:,:) double
     end
     
     events
@@ -28,6 +31,7 @@ classdef Agent < handle
         GoalChanged
         TrajectoryChanged
         NavigationChanged
+        VelocitiesChanged
     end
     
     methods
@@ -51,6 +55,10 @@ classdef Agent < handle
             % obj.SetGoal(16.25, -56.68);
 
             obj.Reset();
+
+            obj.ComputeVelocities();
+            addlistener(obj, "NavigationChanged", @obj.ComputeVelocities);
+            addlistener(obj, "GoalChanged", @obj.ComputeVelocities);
         end
 
         function SetStart(obj, lat, lon)
@@ -150,6 +158,36 @@ classdef Agent < handle
                 % limit the agent's speed to a maximum value
                 velocity = obj.max_speed * velocity/norm(velocity);
             end
+        end
+
+        function ComputeVelocities(obj, ~, ~)
+            %COMPUTEVELOCITIES Calculate what the agent's velocity would be at all sample locations
+
+            goal_I = obj.goal_I_INCL;
+            goal_F = obj.goal_F_TOTAL;
+
+            lat = obj.magmodel.sample_latitudes;
+            lon = obj.magmodel.sample_longitudes;
+
+            I_INCL = obj.magmodel.samples.I_INCL;
+            F_TOTAL = obj.magmodel.samples.F_TOTAL;
+            f = @obj.ComputeVelocity;
+
+            velocities = nan(2, length(lat), length(lon));
+
+            % sample velocities globally
+            imax = length(lat);
+            jmax = length(lon);
+            parfor i = 1:imax
+                for j = 1:jmax
+                    I = I_INCL(i, j);
+                    F = F_TOTAL(i, j);
+                    velocities(:, i, j) = f(goal_I, goal_F, I, F);
+                end
+            end
+
+            obj.sample_velocities = velocities;
+            notify(obj, "VelocitiesChanged");
         end
 
         function dir_string = ApproxDirectionString(~, velocity)

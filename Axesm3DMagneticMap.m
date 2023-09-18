@@ -96,8 +96,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             % obj.SetVectorField("gradients");
 
             addlistener(obj.agent, "NavigationChanged", @obj.DrawStabilityMesh);
-            addlistener(obj.agent, "NavigationChanged", @obj.DrawFlowVectorFieldPlot);
-            addlistener(obj.agent, "GoalChanged", @obj.DrawFlowVectorFieldPlot);
+            addlistener(obj.agent, "VelocitiesChanged", @obj.DrawFlowVectorFieldPlot);
         end
 
         function line = AddLine(obj, lat, lon, linespec, varargin)
@@ -348,30 +347,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
                 delete(obj.vector_field);
 
-                goal_I = obj.agent.goal_I_INCL;
-                goal_F = obj.agent.goal_F_TOTAL;
-                
-                lat = obj.magmodel.sample_latitudes;
-                lon = obj.magmodel.sample_longitudes;
-                I_INCL = obj.magmodel.samples.I_INCL;
-                F_TOTAL = obj.magmodel.samples.F_TOTAL;
-                agent = obj.agent;
-                f = @agent.ComputeVelocity;
-
-                dlat = nan(length(lat), length(lon));
-                dlon = nan(length(lat), length(lon));
-
-                imax = length(lat);
-                jmax = length(lon);
-                parfor i = 1:imax
-                    for j = 1:jmax
-                        I = I_INCL(i, j);
-                        F = F_TOTAL(i, j);
-                        velocity = f(goal_I, goal_F, I, F);
-                        dlon(i, j) = velocity(1);
-                        dlat(i, j) = velocity(2);
-                    end
-                end
+                dlon = squeeze(obj.agent.sample_velocities(1, :, :));
+                dlat = squeeze(obj.agent.sample_velocities(2, :, :));
             
                 obj.vector_field = quiverm(obj.lat_mesh, obj.lon_mesh, dlat, dlon);
                 color = "#444444";

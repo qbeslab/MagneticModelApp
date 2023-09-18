@@ -33,8 +33,7 @@ classdef (Abstract) AbstractMagneticMap < handle
             % obj.SetLevelCurves("nullclines");
             obj.AddAgentPlots;
 
-            addlistener(obj.agent, "NavigationChanged", @obj.DrawNullclinePlots);
-            addlistener(obj.agent, "GoalChanged", @obj.DrawNullclinePlots);
+            addlistener(obj.agent, "VelocitiesChanged", @obj.DrawNullclinePlots);
         end
 
         function SetLevelCurves(obj, level_curves_type)
@@ -161,32 +160,10 @@ classdef (Abstract) AbstractMagneticMap < handle
                 interpm_maxdiff = 1;  % degrees (or nan to skip contour interpolation)
                 % interpm_maxdiff = nan;  % degrees (or nan to skip contour interpolation)
     
-                goal_I = obj.agent.goal_I_INCL;
-                goal_F = obj.agent.goal_F_TOTAL;
-    
                 lat = obj.magmodel.sample_latitudes;
                 lon = obj.magmodel.sample_longitudes;
-
-                I_INCL = obj.magmodel.samples.I_INCL;
-                F_TOTAL = obj.magmodel.samples.F_TOTAL;
-                a = obj.agent;
-                f = @a.ComputeVelocity;
-
-                dlat = nan(length(lat), length(lon));
-                dlon = nan(length(lat), length(lon));
-    
-                % sample velocity globally
-                imax = length(lat);
-                jmax = length(lon);
-                parfor i = 1:imax
-                    for j = 1:jmax
-                        I = I_INCL(i, j);
-                        F = F_TOTAL(i, j);
-                        velocity = f(goal_I, goal_F, I, F);
-                        dlon(i, j) = velocity(1);
-                        dlat(i, j) = velocity(2);
-                    end
-                end
+                dlon = squeeze(obj.agent.sample_velocities(1, :, :));
+                dlat = squeeze(obj.agent.sample_velocities(2, :, :));
     
                 % locate velocity nullclines (velocity contours with level 0)
                 dlat_contours = contourc(lon, lat, dlat, -1e6:1e6:1e6);  % contourc won't allow simply [0]
