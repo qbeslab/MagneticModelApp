@@ -219,12 +219,10 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
 
             lat = obj.magmodel.sample_latitudes;
             lon = obj.magmodel.sample_longitudes;
-
-            A = obj.agent.A;
-            dFdx = squeeze(obj.magmodel.sample_gradients.F_TOTAL(1, :, :));
-            dFdy = squeeze(obj.magmodel.sample_gradients.F_TOTAL(2, :, :));
-            dIdx = squeeze(obj.magmodel.sample_gradients.I_INCL(1, :, :));
-            dIdy = squeeze(obj.magmodel.sample_gradients.I_INCL(2, :, :));
+            dF = obj.magmodel.sample_gradients.F_TOTAL;
+            dI = obj.magmodel.sample_gradients.I_INCL;
+            a = obj.agent;
+            f = @a.ComputeEigenvalues;
 
             stab = nan(length(lat), length(lon));
 
@@ -232,56 +230,13 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             jmax = length(lon);
             parfor i = 1:imax
                 for j = 1:jmax
-                    jacobian = -A * [dFdx(i, j), dFdy(i, j); dIdx(i, j), dIdy(i, j)];
-                    ev = eig(jacobian);
+                    ev = f(dF(:, i, j), dI(:, i, j));
                     evreal = real(ev);
                     evimag = imag(ev);
                     tol = 1e-12;
                     is_unstable = evreal(1) > tol || evreal(2) > tol;
                     is_neutrally_stable = abs(evreal(1)) < tol || abs(evreal(2)) < tol;
                     has_rotation = abs(evimag(1)) > tol || abs(evimag(2)) > tol;
-
-                    % % check analytical form of jacobian eigenvalues
-                    % % - numerical deviations can be found for eigenvalues
-                    % %   near zero, especially when agent.A is large
-                    % a = A(1, 1);
-                    % b = A(1, 2);
-                    % c = A(2, 1);
-                    % d = A(2, 2);
-                    % trJ = -(a * dFdx(i, j) + b * dIdx(i, j) + c * dFdy(i, j) + d * dIdy(i, j));
-                    % detJ = (a * d - b * c) * (dFdx(i, j) * dIdy(i, j) - dFdy(i, j) * dIdx(i, j));
-                    % ev2 = [(trJ - sqrt(trJ^2 - 4 * detJ)) / 2;
-                    %        (trJ + sqrt(trJ^2 - 4 * detJ)) / 2];
-                    % is_unstable2 = trJ > tol || (detJ < 0 && abs(detJ) > tol);
-                    % is_neutrally_stable2 = abs(detJ) < tol;
-                    % has_rotation2 = trJ^2 < 4 * detJ;
-                    % format long;
-                    % if norm(sort(ev) - sort(ev2)) > 1e-10
-                    %     disp("significant deviation found:");
-                    %     disp([i, j]);
-                    %     disp([sort(ev), sort(ev2)]);
-                    %     disp(norm(sort(ev) - sort(ev2)));
-                    % end
-                    % if is_unstable ~= is_unstable2
-                    %     disp("disagreement about unstability found:");
-                    %     disp([i, j]);
-                    %     disp([sort(ev), sort(ev2)]);
-                    %     disp([is_unstable, is_unstable2]);
-                    %     disp([trJ, detJ]);
-                    % end
-                    % if is_neutrally_stable ~= is_neutrally_stable2
-                    %     disp("disagreement about neutral stability found:");
-                    %     disp([i, j]);
-                    %     disp([sort(ev), sort(ev2)]);
-                    %     disp([is_neutrally_stable, is_neutrally_stable2]);
-                    %     disp([trJ, detJ]);
-                    % end
-                    % if has_rotation ~= has_rotation2
-                    %     disp("disagreement about rotation found:");
-                    %     disp([i, j]);
-                    %     disp([sort(ev), sort(ev2)]);
-                    %     disp([has_rotation, has_rotation2]);
-                    % end
 
                     if is_unstable
                         % at least one eigenvalue real-part is positive: unstable (repelling)

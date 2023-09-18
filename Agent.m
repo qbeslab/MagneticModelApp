@@ -160,6 +160,68 @@ classdef Agent < handle
             end
         end
 
+        function ev = ComputeEigenvalues(obj, dF, dI)
+            %COMPUTEEIGENVALUES Compute the eigenvalues of the linearized velocity in a location with the given magnetic field property gradients.
+
+            dFdx = dF(1);
+            dFdy = dF(2);
+            dIdx = dI(1);
+            dIdy = dI(2);
+
+            % find eigenvalues numerically
+            % - when eigenvalues should be exactly zero, error accumulated
+            %   with the numerical approach can sometimes result in
+            %   non-zero values, especially when agent.A is large, which is
+            %   problematic for stability classification
+            jacobian = -obj.A * [dFdx, dFdy; dIdx, dIdy];
+            ev = eig(jacobian);
+
+            % % find eigenvalues formulaically, with matrix multiplication
+            % % - this approach seems to reliably compute eigenvalues that
+            % %   should be exactly zero (e.g., when detJ is zero)
+            % jacobian = -obj.A * [dFdx, dFdy; dIdx, dIdy];
+            % trJ = trace(jacobian);
+            % detJ = det(jacobian);
+            % ev = [(trJ - sqrt(trJ^2 - 4 * detJ)) / 2;
+            %       (trJ + sqrt(trJ^2 - 4 * detJ)) / 2];
+
+            % % find eigenvalues formulaically, without matrix multiplication
+            % % - this seems to be entirely equivalent to using the build-in
+            % %   trace and det functions
+            % a = obj.A(1, 1);
+            % b = obj.A(1, 2);
+            % c = obj.A(2, 1);
+            % d = obj.A(2, 2);
+            % trJ = -(a * dFdx + b * dIdx + c * dFdy + d * dIdy);
+            % detJ = (a * d - b * c) * (dFdx * dIdy - dFdy * dIdx);
+            % ev = [(trJ - sqrt(trJ^2 - 4 * detJ)) / 2;
+            %       (trJ + sqrt(trJ^2 - 4 * detJ)) / 2];
+
+            % %------------------------------------------------------------
+            % % compare numerically and formulaically computed eigenvalues
+            % % - when eigenvalues should be exactly zero, error accumulated
+            % %   with the numerical approach can sometimes result in
+            % %   non-zero values, especially when agent.A is large, which is
+            % %   problematic for stability classification
+            % jacobian = -obj.A * [dFdx, dFdy; dIdx, dIdy];
+            % ev1 = eig(jacobian);
+            % a = obj.A(1, 1);
+            % b = obj.A(1, 2);
+            % c = obj.A(2, 1);
+            % d = obj.A(2, 2);
+            % trJ = -(a * dFdx + b * dIdx + c * dFdy + d * dIdy);
+            % detJ = (a * d - b * c) * (dFdx * dIdy - dFdy * dIdx);
+            % ev2 = [(trJ - sqrt(trJ^2 - 4 * detJ)) / 2;
+            %        (trJ + sqrt(trJ^2 - 4 * detJ)) / 2];
+            % format long;
+            % if norm(sort(ev1) - sort(ev2)) > 1e-15
+            %     disp("significant deviation found:");
+            %     disp([sort(ev1), sort(ev2)]);
+            %     disp(norm(sort(ev1) - sort(ev2)));
+            % end
+            % %------------------------------------------------------------
+        end
+
         function ComputeVelocities(obj, ~, ~)
             %COMPUTEVELOCITIES Calculate what the agent's velocity would be at all sample locations
 
