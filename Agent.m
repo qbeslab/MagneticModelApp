@@ -57,8 +57,8 @@ classdef Agent < handle
             obj.Reset();
 
             obj.ComputeVelocities();
-            addlistener(obj, "NavigationChanged", @obj.ComputeVelocities);
-            addlistener(obj, "GoalChanged", @obj.ComputeVelocities);
+            % addlistener(obj, "NavigationChanged", @obj.ComputeVelocities);
+            % addlistener(obj, "GoalChanged", @obj.ComputeVelocities);
         end
 
         function SetStart(obj, lat, lon)

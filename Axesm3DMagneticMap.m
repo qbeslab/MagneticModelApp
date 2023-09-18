@@ -96,7 +96,9 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             % obj.SetVectorField("gradients");
 
             addlistener(obj.agent, "NavigationChanged", @obj.DrawStabilityMesh);
-            addlistener(obj.agent, "VelocitiesChanged", @obj.DrawFlowVectorFieldPlot);
+            addlistener(obj.agent, "NavigationChanged", @obj.DrawFlowVectorFieldPlot);
+            addlistener(obj.agent, "GoalChanged", @obj.DrawFlowVectorFieldPlot);
+            % addlistener(obj.agent, "VelocitiesChanged", @obj.DrawFlowVectorFieldPlot);
         end
 
         function line = AddLine(obj, lat, lon, linespec, varargin)
@@ -302,6 +304,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 obj.ax.Parent = tempf;
 
                 delete(obj.vector_field);
+
+                obj.agent.ComputeVelocities();
 
                 dlon = squeeze(obj.agent.sample_velocities(1, :, :));
                 dlat = squeeze(obj.agent.sample_velocities(2, :, :));

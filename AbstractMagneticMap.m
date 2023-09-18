@@ -33,7 +33,9 @@ classdef (Abstract) AbstractMagneticMap < handle
             % obj.SetLevelCurves("nullclines");
             obj.AddAgentPlots;
 
-            addlistener(obj.agent, "VelocitiesChanged", @obj.DrawNullclinePlots);
+            addlistener(obj.agent, "NavigationChanged", @obj.DrawNullclinePlots);
+            addlistener(obj.agent, "GoalChanged", @obj.DrawNullclinePlots);
+            % addlistener(obj.agent, "VelocitiesChanged", @obj.DrawNullclinePlots);
         end
 
         function SetLevelCurves(obj, level_curves_type)
@@ -156,6 +158,8 @@ classdef (Abstract) AbstractMagneticMap < handle
 
             if obj.level_curves_type == "nullclines"
                 delete(obj.level_curves); obj.level_curves = [];
+
+                obj.agent.ComputeVelocities();
                 
                 interpm_maxdiff = 1;  % degrees (or nan to skip contour interpolation)
                 % interpm_maxdiff = nan;  % degrees (or nan to skip contour interpolation)
