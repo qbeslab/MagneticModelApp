@@ -324,7 +324,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 obj.surface_mesh.UserData.ZOrder = 0;
                 obj.surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
                 colormap(obj.ax, "summer");
-                clim(obj.ax, "auto");
+                clim(obj.ax, [0, 1]);
                 % if obj.projection ~= "globe"
                 %     alpha(surface_mesh, 0.3);
                 % end
