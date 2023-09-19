@@ -64,7 +64,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             delete(tempf);
 
             load("coastlines", "coastlat", "coastlon");
-            obj.coastline_plot = obj.AddLine(coastlat, coastlon, 'b', Tag="Coastlines", ZOrder=1);
+            obj.coastline_plot = obj.AddLine(coastlat, coastlon, 'b', Tag="Coastlines", LineWidth=1, ZOrder=1);
             obj.coastline_plot.ButtonDownFcn = '';  % disable default binding to uimaptbx
             
             % darken the background and hide some axes elements
@@ -180,11 +180,12 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             
                 case "orthogonality"
                     % plot orthogonality as a color map
-                    obj.surface_mesh = meshm(obj.magmodel.sample_orthogonality, obj.R, Parent=obj.ax, Tag="Orthogonality");
+                    orthogonality = abs(asind(sind(obj.magmodel.sample_orthogonality)));  % map [-180, 180] to [0, 90]
+                    obj.surface_mesh = meshm(orthogonality, obj.R, Parent=obj.ax, Tag="Orthogonality");
                     obj.surface_mesh.UserData.ZOrder = 0;
                     obj.surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
                     colormap(obj.ax, "default");
-                    clim(obj.ax, "auto");
+                    clim(obj.ax, [0, 90]);
                     obj.coastline_plot.Color = 'w';
 
                     % update graphics layering

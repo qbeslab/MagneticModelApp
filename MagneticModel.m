@@ -94,7 +94,7 @@ classdef MagneticModel < handle
         end
 
         function PopulateSamples(obj)
-            %COLLECTSAMPLES Collect samples of magnetic field properties at all coords
+            %POPULATESAMPLES Collect samples of magnetic field properties at all coords
 
             lat = obj.sample_latitudes;
             lon = obj.sample_longitudes;
@@ -179,11 +179,18 @@ classdef MagneticModel < handle
 
         function ComputeOrthogonality(obj)
             %COMPUTEORTHOGONALITY Compute the angle in degrees between gradient vectors for inclination and intensity
+            %   Angles are between -180 and 180 degrees. This range is
+            %   needed, rather than 0 to 90 degrees or 0 to 180 degrees,
+            %   to facilitate AbstractMagenticMap.DrawParallelGradientsPlot
+            %   computing contours of 0 degrees (contourc can't find
+            %   levels if there aren't values above and below it).
 
             lat = obj.sample_latitudes;
             lon = obj.sample_longitudes;
             dI_INCL = obj.sample_gradients.I_INCL;
             dF_TOTAL = obj.sample_gradients.F_TOTAL;
+            f = @obj.angleFromUToV;
+            % f = @obj.angleFromUToV2;
 
             orthogonality = nan(length(lat), length(lon));
 
@@ -193,16 +200,29 @@ classdef MagneticModel < handle
                 for j = 1:jmax
                     dI = dI_INCL(:, i, j);
                     dF = dF_TOTAL(:, i, j);
-                    angle = acosd(dot(dI, dF)/(norm(dI) * norm(dF)));
-                    if angle > 90
-                        % result will be between 0 and 90 degrees
-                        angle = 180 - angle;
-                    end
+                    angle = f(dI, dF);
                     orthogonality(i, j) = angle;
                 end
             end
 
             obj.sample_orthogonality = orthogonality;
+        end
+
+        function angle = angleFromUToV(~, U, V)
+            %ANGLEFROMUTOV Compute the signed angle in degrees from vector U to vector V
+            angleU = atan2d(U(2), U(1));  % between -180 and 180 degrees
+            angleV = atan2d(V(2), V(1));  % between -180 and 180 degrees
+            angleU = mod(angleU, 360);  % between 0 and 360 degrees
+            angleV = mod(angleV, 360);  % between 0 and 360 degrees
+            angle = angleV - angleU;
+            angle = atan2d(sind(angle), cosd(angle));  % between -180 and 180 degrees
+        end
+        
+        function angle = angleFromUToV2(~, U, V)
+            %ANGLEFROMUTOV2 Compute the signed angle in degrees from vector U to vector V
+            %   Simpler and apparently equivalent to angleFromUToV, but I
+            %   don't understand how it works!
+            angle = atan2d(det([U, V]), dot(U, V));  % between -180 and 180 degrees
         end
     end
 end

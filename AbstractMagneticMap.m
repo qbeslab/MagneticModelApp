@@ -29,8 +29,11 @@ classdef (Abstract) AbstractMagneticMap < handle
             obj.magmodel = magmodel;
             obj.agent = agent;
             obj.InitializeAxes(parent);
+
             obj.SetLevelCurves("contours");
+            % obj.SetLevelCurves("parallelgradients");
             % obj.SetLevelCurves("nullclines");
+            
             obj.AddAgentPlots;
 
             addlistener(obj.agent, "NavigationChanged", @obj.DrawNullclinePlots);
@@ -47,6 +50,8 @@ classdef (Abstract) AbstractMagneticMap < handle
                     delete(obj.level_curves); obj.level_curves = [];
                 case "contours"
                     obj.DrawContourPlots();
+                case "parallelgradients"
+                    obj.DrawParallelGradientsPlot();
                 case "nullclines"
                     obj.DrawNullclinePlots();
             end
@@ -153,6 +158,67 @@ classdef (Abstract) AbstractMagneticMap < handle
             end
         end
 
+        function DrawParallelGradientsPlot(obj, ~, ~)
+            %DRAWPARALLELGRADIENTSPLOT Add contour lines where the inclination and intensity gradients are parallel to map
+
+            if obj.level_curves_type == "parallelgradients"
+                delete(obj.level_curves); obj.level_curves = [];
+                
+                interpm_maxdiff = 1;  % degrees (or nan to skip contour interpolation)
+                % interpm_maxdiff = nan;  % degrees (or nan to skip contour interpolation)
+    
+                lat = obj.magmodel.sample_latitudes;
+                lon = obj.magmodel.sample_longitudes;
+                orthogonality = obj.magmodel.sample_orthogonality;
+    
+                % locate parallel gradients contours (orthogonality contours with level -180, 0, or 180 degrees)
+                contours = contourc(lon, lat, orthogonality, [-180, 0, 180]);
+                contour_table = getContourLineCoordinates(contours);
+
+                % collect contour coordinates
+                parallel_x = [];
+                parallel_y = [];
+                nContours = max(contour_table.Group);
+                for i = 1:nContours
+                    gidx = contour_table.Group == i;
+
+                    % get contour coordinates
+                    contour_lat = contour_table.Y(gidx);
+                    contour_lon = contour_table.X(gidx);
+                    if ~isnan(interpm_maxdiff)
+                        % interpolate points on the contour line if necessary
+                        [contour_lat, contour_lon] = interpm(contour_lat, contour_lon, interpm_maxdiff, 'gc');
+                    end
+
+                    % store multiple contour lines with same level in a
+                    % single pair of arrays to reduce the number of lines
+                    % drawn
+                    % - nan is appended to each contour line to prevent
+                    %   connections being drawn at contour discontinuities
+                    parallel_x = [parallel_x; contour_lon; nan];
+                    parallel_y = [parallel_y; contour_lat; nan];
+                end
+                
+                % plot parallel gradients contour
+                color = '#FF8080';  % light red
+                tag = "Orthogonality = 0 deg";
+                datatiplabel = "PARALLEL GRADIENTS";
+                line = obj.AddLine( ...
+                    parallel_y, parallel_x, ...
+                    '-', LineWidth=2, Color=color, ...
+                    Tag=tag, ZOrder=2 ...
+                    );
+                if isprop(line, "DataTipTemplate")
+                    % add tooltips if the axes support them
+                    line.DataTipTemplate.DataTipRows = [dataTipTextRow(datatiplabel, ''); line.DataTipTemplate.DataTipRows];
+                end
+                obj.level_curves(end+1) = line;
+    
+                % update graphics layering
+                obj.SortZStack();
+            end
+        end
+
         function DrawNullclinePlots(obj, ~, ~)
             %DRAWNULLCLINEPLOTS Add velocity nullclines to map
 
@@ -188,8 +254,6 @@ classdef (Abstract) AbstractMagneticMap < handle
                             contour_table = dlon_table;
                     end
                     nContours = max(contour_table.Group);
-    
-                    % plot each contour level one at a time
                     for i = 1:nContours
                         gidx = contour_table.Group == i;
     
