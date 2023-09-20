@@ -111,9 +111,12 @@ classdef Agent < handle
             obj.goal_F_TOTAL = F;
 
             if obj.verbose
+                [dFdx, dFdy, dIdx, dIdy] = obj.magmodel.EstimateGradients(obj.goal_lat, obj.goal_lon);
+                ev = obj.ComputeEigenvalues([dFdx, dFdy], [dIdx, dIdy]);
                 disp('=== GOAL SET ===')
                 disp(['Latitude: ', char(string(obj.goal_lat)), '  Longitude: ', char(string(obj.goal_lon))]);
                 disp(['Inclination: ', char(string(round(obj.goal_I_INCL, 2))), '°  Intensity: ', char(string(round(obj.goal_F_TOTAL, 2))), ' μT']);
+                disp(['Eigenvalues (with current A): ', num2str(ev(1)), ', ', num2str(ev(2))]);
             end
 
             notify(obj, "GoalChanged");
