@@ -63,6 +63,17 @@ classdef Agent < handle
 
         function SetStart(obj, lat, lon)
             %SETSTART Set the starting position of the agent
+
+            if nargin < 2
+                % capture [lat, lon] with a mouse click
+                % - only works for axesm-based 2D maps in non-app figures
+                [lat, lon] = inputm(1);
+            elseif nargin < 3 && length(lat) == 2
+                % assume [lat, lon] were passed as an array
+                lon = lat(2);
+                lat = lat(1);
+            end
+
             obj.start_lat = lat;
             obj.start_lon = lon;
 
@@ -81,6 +92,17 @@ classdef Agent < handle
 
         function SetGoal(obj, lat, lon)
             %SETGOAL Set the goal position for the agent
+
+            if nargin < 2
+                % capture [lat, lon] with a mouse click
+                % - only works for axesm-based 2D maps in non-app figures
+                [lat, lon] = inputm(1);
+            elseif nargin < 3 && length(lat) == 2
+                % assume [lat, lon] were passed as an array
+                lon = lat(2);
+                lat = lat(1);
+            end
+
             obj.goal_lat = lat;
             obj.goal_lon = lon;
 
