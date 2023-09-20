@@ -3,15 +3,8 @@
 %   - Mapping Toolbox
 %   - getContourLineCoordinates (from MathWorks File Exchange)
 % Optional add-ons (use MATLAB's Add-On Explorer to install):
-%   - MATLAB Basemap Data - colorterrain (install for offline use)
 %   - Parallel Computing Toolbox (install for potential speed gains)
 
-try
-    % if app is already open, make sure the old window closes
-    delete(app);
-catch
-    % otherwise do nothing
-end
 close all;
 clear;
 
@@ -32,4 +25,5 @@ end
 verbose = 'on';
 agent = Agent(magmodel, verbose);
 
-app = MagneticMapApp(magmodel, agent);
+fig = figure();
+g = Axesm3DMagneticMap(magmodel, agent);
