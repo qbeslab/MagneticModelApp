@@ -169,6 +169,55 @@ classdef Agent < handle
             notify(obj, "TrajectoryChanged");
         end
 
+        function Run(obj, max_steps)
+            %STEP Reset and step until an equilibrium or max steps is reached
+
+            if nargin < 2
+                % simulation will stop if this many steps are taken
+                max_steps = 10000;
+            end
+
+            obj.Reset();
+
+            % simulation will stop if the velocity drops below this value
+            velocity_threshold = obj.max_speed / 100;
+
+            steps_taken = 0;
+            while true
+                if steps_taken >= max_steps
+                    % disp("terminating: max steps reached");
+                    break
+                end
+
+                velocity = obj.ComputeVelocity();
+                % disp(['velocity: ', obj.ApproxDirectionString(velocity), ' [', char(string(velocity(1))), ', ', char(string(velocity(2))), ']']);
+                if norm(velocity) < velocity_threshold
+                    % disp(['terminating: velocity dropped below threshold after ', num2str(steps_taken), '/', num2str(max_steps), ' steps (equilibrium possibly reached)']);
+                    break
+                end
+    
+                new_lon = obj.trajectory_lon(end) + velocity(1) * obj.time_step;
+                new_lat = obj.trajectory_lat(end) + velocity(2) * obj.time_step;
+
+                if abs(new_lat) > 90
+                    disp("aborting: crossed polar singularity");
+                    break
+                end
+    
+                obj.trajectory_lat = [obj.trajectory_lat; new_lat];
+                obj.trajectory_lon = [obj.trajectory_lon; new_lon];
+                % [obj.trajectory_lat, obj.trajectory_lon] = interpm(obj.trajectory_lat, obj.trajectory_lon, 1, 'gc');
+    
+                [~, ~, ~, ~, ~, I, F] = obj.magmodel.EvaluateModel(new_lat, new_lon);
+                obj.current_I_INCL = I;
+                obj.current_F_TOTAL = F;
+
+                steps_taken = steps_taken + 1;
+            end
+
+            notify(obj, "TrajectoryChanged");
+        end
+
         function velocity = ComputeVelocity(obj, goal_I_INCL, goal_F_TOTAL, current_I_INCL, current_F_TOTAL)
             %COMPUTEVELOCITY Calculate the agent's velocity
             if nargin == 1
