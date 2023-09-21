@@ -2,6 +2,7 @@ classdef (Abstract) AbstractMagneticMap < handle
     %ABSTRACTMAGNETICMAP Superclass for magnetic maps
     % Required add-ons (use MATLAB's Add-On Explorer to install):
     %   - Mapping Toolbox
+    %   - getContourLineCoordinates (from MathWorks File Exchange)
     % Optional add-ons (use MATLAB's Add-On Explorer to install):
     %   - Parallel Computing Toolbox (install for potential speed gains)
     
@@ -236,8 +237,8 @@ classdef (Abstract) AbstractMagneticMap < handle
                 dlat = squeeze(obj.agent.sample_velocities(2, :, :));
     
                 % locate velocity nullclines (velocity contours with level 0)
-                dlat_contours = contourc(lon, lat, dlat, -1e6:1e6:1e6);  % contourc won't allow simply [0]
-                dlon_contours = contourc(lon, lat, dlon, -1e6:1e6:1e6);  % contourc won't allow simply [0]
+                dlat_contours = contourc(lon, lat, dlat, [0, 1e10]);  % contourc won't allow simply [0]
+                dlon_contours = contourc(lon, lat, dlon, [0, 1e10]);  % contourc won't allow simply [0]
                 dlat_table = getContourLineCoordinates(dlat_contours);
                 dlon_table = getContourLineCoordinates(dlon_contours);
     
