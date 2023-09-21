@@ -280,8 +280,17 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 obj.surface_mesh = meshm(obj.stability, obj.R, Parent=obj.ax, Tag="Stability");
                 obj.surface_mesh.UserData.ZOrder = 0;
                 obj.surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
-                colormap(obj.ax, "summer");
                 clim(obj.ax, [0, 1]);
+
+                % discretize the colormap for colorbar
+                cm = colormap(obj.ax, "summer");
+                cm = [cm(1, :); ...
+                      cm(round(256 * 0.25), :); ...
+                      cm(round(256 * 0.50), :); ...
+                      cm(round(256 * 0.75), :); ...
+                      cm(end, :)];
+                colormap(obj.ax, cm);
+
                 % if obj.projection ~= "globe"
                 %     alpha(surface_mesh, 0.3);
                 % end
