@@ -150,7 +150,7 @@ classdef (Abstract) AbstractMagneticMap < handle
                             % add tooltips if the axes support them
                             line.DataTipTemplate.DataTipRows(end+1) = dataTipTextRow(datatiplabel, datatipvalues, datatipformat);
                         end
-                        obj.level_curves(end+1) = line;
+                        obj.level_curves = [obj.level_curves; line];
                     end
                 end
     
@@ -213,7 +213,7 @@ classdef (Abstract) AbstractMagneticMap < handle
                     % add tooltips if the axes support them
                     line.DataTipTemplate.DataTipRows = [dataTipTextRow(datatiplabel, ''); line.DataTipTemplate.DataTipRows];
                 end
-                obj.level_curves(end+1) = line;
+                obj.level_curves = [obj.level_curves; line];
     
                 % update graphics layering
                 obj.SortZStack();
@@ -294,7 +294,7 @@ classdef (Abstract) AbstractMagneticMap < handle
                     % add tooltips if the axes support them
                     line.DataTipTemplate.DataTipRows = [dataTipTextRow(datatiplabel, ''); line.DataTipTemplate.DataTipRows];
                 end
-                obj.level_curves(end+1) = line;
+                obj.level_curves = [obj.level_curves; line];
 
                 % plot y-nullcline (N/S nullcline, dlat=0)
                 color = "#EEEEEE";  % light gray
@@ -309,7 +309,7 @@ classdef (Abstract) AbstractMagneticMap < handle
                     % add tooltips if the axes support them
                     line.DataTipTemplate.DataTipRows = [dataTipTextRow(datatiplabel, ''); line.DataTipTemplate.DataTipRows];
                 end
-                obj.level_curves(end+1) = line;
+                obj.level_curves = [obj.level_curves; line];
 
                 % locate equilibria at the intersections of nullclines
                 [intersections_lon, intersections_lat] = polyxpoly(dlat_x, dlat_y, dlon_x, dlon_y);
@@ -327,7 +327,7 @@ classdef (Abstract) AbstractMagneticMap < handle
                         % add tooltips if the axes support them
                         line.DataTipTemplate.DataTipRows = [dataTipTextRow('FIXED POINT', ''); line.DataTipTemplate.DataTipRows];
                     end
-                    obj.level_curves(end+1) = line;
+                    obj.level_curves = [obj.level_curves; line];
                 catch
                     % will fail if there are no intersections
                 end

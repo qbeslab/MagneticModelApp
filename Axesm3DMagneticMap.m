@@ -205,7 +205,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             switch obj.vector_field_type
                 case "none"
                     % clear the vector field
-                    delete(obj.vector_field);
+                    delete(obj.vector_field); obj.vector_field = [];
 
                 case "flow"
                     % plot arrows showing the paths that the agent would take
@@ -304,7 +304,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 tempf = figure(Visible='off');
                 obj.ax.Parent = tempf;
 
-                delete(obj.vector_field);
+                delete(obj.vector_field); obj.vector_field = [];
 
                 obj.agent.ComputeVelocities();
 
@@ -344,7 +344,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 tempf = figure(Visible='off');
                 obj.ax.Parent = tempf;
 
-                delete(obj.vector_field);
+                delete(obj.vector_field); obj.vector_field = [];
 
                 % by scaling the gradients manually here and passing 0 to
                 % quiverm's scale parameter, we ensures inclination and
