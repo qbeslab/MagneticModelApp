@@ -194,7 +194,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 case "stability"
                     % plot goal stability as a color map
                     obj.DrawStabilityMesh();
-                    obj.coastline_plot.Color = 'b';
+                    obj.coastline_plot.Color = '#333333';  % dark gray
             end
         end
 
