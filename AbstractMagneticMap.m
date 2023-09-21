@@ -206,9 +206,15 @@ classdef (Abstract) AbstractMagneticMap < handle
                 datatiplabel = "PARALLEL GRADIENTS";
                 line = obj.AddLine( ...
                     parallel_y, parallel_x, ...
-                    '-', LineWidth=2, LineStyle=':', Color=color, ...
+                    '-', LineWidth=2, Color=color, ...
                     Tag=tag, ZOrder=2 ...
                     );
+                try
+                    line.LineStyle = ':';
+                catch
+                    % will fail for GeographicGlobe which does not support
+                    % dashed or dotted lines
+                end
                 if isprop(line, "DataTipTemplate")
                     % add tooltips if the axes support them
                     line.DataTipTemplate.DataTipRows = [dataTipTextRow(datatiplabel, ''); line.DataTipTemplate.DataTipRows];
