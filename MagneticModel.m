@@ -22,12 +22,40 @@ classdef MagneticModel < handle
     end
 
     methods
-        function obj = MagneticModel(sample_resolution)
+        function obj = MagneticModel(sample_resolution, datestr, model, version)
             %MAGNETICMODEL Construct an instance of this class
 
-            obj.model_func = @wrldmagm; obj.version = "2020";  % faster, lesser temporal scope
-            % obj.model_func = @igrfmagm; obj.version = "13";  % slower, greater temporal scope
-            obj.decimal_year = decyear("2020-01-01");
+            if nargin == 1
+                obj.decimal_year = decyear("2020-01-01");
+                obj.model_func = @wrldmagm; obj.version = "2020";  % faster, lesser temporal scope
+                % obj.model_func = @igrfmagm; obj.version = "13";  % slower, greater temporal scope
+            elseif nargin == 2
+                obj.decimal_year = decyear(datestr);
+                obj.model_func = @wrldmagm; obj.version = "2020";  % faster, lesser temporal scope
+                % obj.model_func = @igrfmagm; obj.version = "13";  % slower, greater temporal scope
+            elseif nargin == 3
+                obj.decimal_year = decyear(datestr);
+                switch model
+                    case "WMM"
+                        obj.model_func = @wrldmagm; obj.version = "2020";
+                    case "IGRF"
+                        obj.model_func = @igrfmagm; obj.version = "13";
+                    otherwise
+                        error("Unrecognized model name. Use 'WMM' or 'IGRF'.");
+                end
+            elseif nargin == 4
+                obj.decimal_year = decyear(datestr);
+                switch model
+                    case "WMM"
+                        obj.model_func = @wrldmagm;
+                    case "IGRF"
+                        obj.model_func = @igrfmagm;
+                    otherwise
+                        error("Unrecognized model name. Use 'WMM' or 'IGRF'.");
+                end
+                obj.version = version;
+            end
+
             obj.height = 0;  % altitude in meters
 
             if nargin == 1
