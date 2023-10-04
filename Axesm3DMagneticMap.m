@@ -165,11 +165,12 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             switch obj.surface_mesh_type
                 case "terrain"
                     % plot a terrain mesh
-                    load("topo60c.mat", "topo60c", "topo60cR");
-                    obj.surface_mesh = geoshow(topo60c, topo60cR, Parent=obj.ax, Tag="Terrain", DisplayType="texturemap");
+                    load("topo.mat", "topo", "topolatlim", "topolonlim");
+                    ref = georefcells(topolatlim, topolonlim, size(topo));
+                    obj.surface_mesh = geoshow(topo, ref, Parent=obj.ax, Tag="Terrain", DisplayType="texturemap");
                     obj.surface_mesh.UserData.ZOrder = 0;
                     obj.surface_mesh.ButtonDownFcn = '';  % disable default binding to uimaptbx
-                    [cm, cl] = demcmap(topo60c);
+                    [cm, cl] = demcmap(topo);
                     cm = 1 - (1 - cm) * 0.5;  % lighten the colormap
                     colormap(obj.ax, cm);
                     clim(obj.ax, cl);
