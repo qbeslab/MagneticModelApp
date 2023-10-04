@@ -243,8 +243,8 @@ classdef (Abstract) AbstractMagneticMap < handle
                 dlat = squeeze(obj.agent.sample_velocities(2, :, :));
     
                 % locate velocity nullclines (velocity contours with level 0)
-                dlat_contours = contourc(lon, lat, dlat, [0, 1e10]);  % contourc won't allow simply [0]
-                dlon_contours = contourc(lon, lat, dlon, [0, 1e10]);  % contourc won't allow simply [0]
+                dlat_contours = contourc(lon, lat, dlat, [0, 0]);  % contourc requires an array of at least two levels, but repeats are allowed
+                dlon_contours = contourc(lon, lat, dlon, [0, 0]);  % contourc requires an array of at least two levels, but repeats are allowed
                 dlat_table = getContourLineCoordinates(dlat_contours);
                 dlon_table = getContourLineCoordinates(dlon_contours);
     
