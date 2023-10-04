@@ -54,6 +54,12 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 );
             obj.ax.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
+            % raise the frame to the top (drawn in 2D only)
+            frame = findobj(obj.ax.Children, "Tag", "Frame");
+            if ~isempty(frame)
+                frame.UserData.ZOrder = 20;
+            end
+
             % hold(obj.ax);
 
             % move the camera to the origin
