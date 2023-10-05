@@ -10,6 +10,7 @@ classdef (Abstract) AbstractMagneticMap < handle
         magmodel MagneticModel
         agent Agent
         ax
+        colors
         trajectory
         start
         goal
@@ -29,12 +30,38 @@ classdef (Abstract) AbstractMagneticMap < handle
             %ABSTRACTMAGNETICMAP Construct an instance of this class
             obj.magmodel = magmodel;
             obj.agent = agent;
+
+            obj.colors.agent.start = 'b';
+            obj.colors.agent.goal = 'g';
+            obj.colors.agent.position = 'm';
+            obj.colors.agent.trajectory = 'm';
+
+            % obj.colors.contours.I_INCL = "#02B187";  % green from Taylor (2018)
+            % obj.colors.contours.I_INCL_0 = obj.colors.contours.I_INCL;
+            % obj.colors.contours.F_TOTAL = "#8212B4";  % purple from Taylor (2018)
+
+            obj.colors.contours.I_INCL = 'w';  % white
+            obj.colors.contours.I_INCL_0 = "#FF8080";  % light red, magnetic equator
+            obj.colors.contours.F_TOTAL = "#444444";  % dark gray
+
+            % obj.colors.contours.I_INCL = "#EB3725";  % red from Boström et al. (2012)
+            % obj.colors.contours.I_INCL_0 = obj.colors.contours.I_INCL;
+            % obj.colors.contours.F_TOTAL = '#0085C9';  % blue from Boström et al. (2012)
+
+            obj.colors.parallelgradients = "#FF8000";  % orange
+
+            obj.colors.nullclines.x = obj.colors.contours.F_TOTAL;
+            obj.colors.nullclines.y = obj.colors.contours.I_INCL;
+
+            % obj.colors.nullclines.x = "#FF0000";  % red
+            % obj.colors.nullclines.y = "#FF8000";  % orange
+
             obj.InitializeAxes(parent);
 
             obj.SetLevelCurves("contours");
             % obj.SetLevelCurves("parallelgradients");
             % obj.SetLevelCurves("nullclines");
-            
+
             obj.AddAgentPlots;
 
             addlistener(obj.agent, "NavigationChanged", @obj.DrawNullclinePlots);
@@ -95,17 +122,9 @@ classdef (Abstract) AbstractMagneticMap < handle
                         end
     
                         % set color
-                        color = 'k';  % default
-                        switch param
-                            case "I_INCL"
-                                % color = "#02B187";  % green from Taylor (2018)
-                                color = "#EEEEEE";  % light gray
-                                if level == 0
-                                    color = '#FF8080';  % light red, magnetic equator
-                                end
-                            case "F_TOTAL"
-                                % color = "#8212B4";  % purple from Taylor (2018)
-                                color = "#444444";  % dark gray
+                        color = obj.colors.contours.(param);
+                        if param == "I_INCL" && level == 0
+                            color = obj.colors.contours.I_INCL_0;
                         end
     
                         % set zorder
@@ -201,12 +220,11 @@ classdef (Abstract) AbstractMagneticMap < handle
                 end
                 
                 % plot parallel gradients contour
-                color = '#FF8000';  % orange
                 tag = "Orthogonality = 0 deg";
                 datatiplabel = "PARALLEL GRADIENTS";
                 line = obj.AddLine( ...
                     parallel_y, parallel_x, ...
-                    '-', LineWidth=2, Color=color, ...
+                    '-', LineWidth=2, Color=obj.colors.parallelgradients, ...
                     Tag=tag, ZOrder=2 ...
                     );
                 try
@@ -288,12 +306,11 @@ classdef (Abstract) AbstractMagneticMap < handle
                 end
 
                 % plot x-nullcline (E/W-nullcline, dlon=0)
-                color = "#444444";  % dark gray
                 tag = "Nullcline dlon = 0";
                 datatiplabel = "NULLCLINE (E/W speed = 0)";
                 line = obj.AddLine( ...
                     dlon_y, dlon_x, ...
-                    '-', LineWidth=2, Color=color, ...
+                    '-', LineWidth=2, Color=obj.colors.nullclines.x, ...
                     Tag=tag, ZOrder=2.2 ...
                     );
                 if isprop(line, "DataTipTemplate")
@@ -303,12 +320,11 @@ classdef (Abstract) AbstractMagneticMap < handle
                 obj.level_curves = [obj.level_curves; line];
 
                 % plot y-nullcline (N/S nullcline, dlat=0)
-                color = "#EEEEEE";  % light gray
                 tag = "Nullcline dlat = 0";
                 datatiplabel = "NULLCLINE (N/S speed = 0)";
                 line = obj.AddLine( ...
                     dlat_y, dlat_x, ...
-                    '-', LineWidth=2, Color=color, ...
+                    '-', LineWidth=2, Color=obj.colors.nullclines.y, ...
                     Tag=tag, ZOrder=2.1 ...
                     );
                 if isprop(line, "DataTipTemplate")
@@ -337,7 +353,7 @@ classdef (Abstract) AbstractMagneticMap < handle
                 catch
                     % will fail if there are no intersections
                 end
-    
+
                 % update graphics layering
                 obj.SortZStack();
             end
@@ -351,12 +367,12 @@ classdef (Abstract) AbstractMagneticMap < handle
             %   draw the trajectory off screen when longitude is outside
             %   [-180, 180] (3D plot does not need this correction)
             [new_lat, new_lon] = obj.CleanLatLon(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
-            obj.trajectory = obj.AddLine(new_lat, new_lon, '-', Tag="Agent Trajectory", Color='m', MarkerSize=2, LineWidth=2, ZOrder=10);
+            obj.trajectory = obj.AddLine(new_lat, new_lon, '-', Tag="Agent Trajectory", Color=obj.colors.agent.trajectory, MarkerSize=2, LineWidth=2, ZOrder=10);
 
             % plot markers for agent start, goal, and current position
-            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'o', Tag="Agent Start", Color='b', MarkerSize=8, LineWidth=2, ZOrder=11);
-            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'o', Tag="Agent Goal", Color='g', MarkerSize=8, LineWidth=2, ZOrder=12);
-            obj.position = obj.AddLine(obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'o', Tag="Agent Position", Color='m', MarkerSize=8, LineWidth=2, ZOrder=13);
+            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'o', Tag="Agent Start", Color=obj.colors.agent.start, MarkerSize=8, LineWidth=2, ZOrder=11);
+            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'o', Tag="Agent Goal", Color=obj.colors.agent.goal, MarkerSize=8, LineWidth=2, ZOrder=12);
+            obj.position = obj.AddLine(obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'o', Tag="Agent Position", Color=obj.colors.agent.position, MarkerSize=8, LineWidth=2, ZOrder=13);
 
             % add tooltips if the axes support them
             if isprop(obj.start, "DataTipTemplate")

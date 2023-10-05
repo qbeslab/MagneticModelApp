@@ -25,6 +25,12 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 parent = gcf;
             end
             obj@AbstractMagneticMap(magmodel, agent, parent);
+
+            obj.colors.surface_mesh.terrain.land = "#D2E9B8";  % muted green
+            obj.colors.surface_mesh.terrain.ocean = "#9DD7EE";  % muted blue
+            
+            % obj.colors.surface_mesh.terrain.land = 'w';  % white
+            % obj.colors.surface_mesh.terrain.ocean = "#DDDDDD";  % light gray
         end
         
         function InitializeAxes(obj, parent)
@@ -126,7 +132,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             %UPDATEAGENTSTART Update marker for agent start
 
             delete(obj.start);  % clear existing start marker
-            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'o', Tag="Agent Start", Color='b', MarkerSize=8, LineWidth=2, ZOrder=11);
+            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'o', Tag="Agent Start", Color=obj.colors.agent.start, MarkerSize=8, LineWidth=2, ZOrder=11);
             obj.start.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             % update graphics layering
@@ -137,7 +143,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             %UPDATEAGENTGOAL Update marker for agent goal
 
             delete(obj.goal);  % clear existing goal marker
-            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'o', Tag="Agent Goal", Color='g', MarkerSize=8, LineWidth=2, ZOrder=12);
+            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'o', Tag="Agent Goal", Color=obj.colors.agent.goal, MarkerSize=8, LineWidth=2, ZOrder=12);
             obj.goal.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             % update graphics layering
@@ -153,11 +159,11 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             [new_lat, new_lon] = obj.CleanLatLon(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
 
             delete(obj.trajectory);  % clear existing trajectory
-            obj.trajectory = obj.AddLine(new_lat, new_lon, '-', Tag="Agent Trajectory", Color='m', MarkerSize=2, LineWidth=2, ZOrder=10);
+            obj.trajectory = obj.AddLine(new_lat, new_lon, '-', Tag="Agent Trajectory", Color=obj.colors.agent.trajectory, MarkerSize=2, LineWidth=2, ZOrder=10);
             obj.trajectory.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             delete(obj.position);  % clear existing position marker
-            obj.position = obj.AddLine(new_lat(end), new_lon(end), 'o', Tag="Agent Position", Color='m', MarkerSize=8, LineWidth=2, ZOrder=13);
+            obj.position = obj.AddLine(new_lat(end), new_lon(end), 'o', Tag="Agent Position", Color=obj.colors.agent.position, MarkerSize=8, LineWidth=2, ZOrder=13);
             obj.position.ButtonDownFcn = '';  % disable default binding to uimaptbx
 
             % update graphics layering
@@ -178,8 +184,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     %   land and ocean when the 3D globe projection is used
                     load("coastlines", "coastlat", "coastlon");
                     Z = zeros(obj.R.RasterSize);
-                    obj.surface_mesh = meshm(Z, obj.R, [], -0.04, Parent=obj.ax, Tag='Ocean', FaceColor='#9DD7EE');
-                    obj.surface_mesh(2) = geoshow(coastlat, coastlon, Parent=obj.ax, Tag="Land", DisplayType='polygon', FaceColor='#D2E9B8', LineStyle='none');
+                    obj.surface_mesh = meshm(Z, obj.R, [], -0.04, Parent=obj.ax, Tag='Ocean', FaceColor=obj.colors.surface_mesh.terrain.ocean);
+                    obj.surface_mesh(2) = geoshow(coastlat, coastlon, Parent=obj.ax, Tag="Land", DisplayType='polygon', FaceColor=obj.colors.surface_mesh.terrain.land, LineStyle='none');
                     obj.surface_mesh(1).UserData.ZOrder = -0.1;
                     obj.surface_mesh(2).UserData.ZOrder = 0;
                     obj.surface_mesh(1).ButtonDownFcn = '';  % disable default binding to uimaptbx
