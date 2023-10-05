@@ -74,8 +74,8 @@ classdef MagneticModel < handle
             obj.sample_longitudes = -180:obj.sample_resolution:180;
 
             obj.contour_levels = struct( ...
-                I_INCL = -90:5:90, ... degrees
-                F_TOTAL = 0:1:70 ... microtesla
+                I_INCL = -80:20:80, ... degrees
+                F_TOTAL = 0:5:100 ... microtesla
                 );
 
             obj.PopulateSamples();
