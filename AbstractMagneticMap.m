@@ -346,22 +346,17 @@ classdef (Abstract) AbstractMagneticMap < handle
         function AddAgentPlots(obj)
             %ADDAGENTPLOTS Add agent trajectory and markers to map
             
-            linewidth = 2;
-            color = "magenta";
-            
             % plot trajectory
             %   coords are cleaned up here since otherwise the 2D plot would
             %   draw the trajectory off screen when longitude is outside
             %   [-180, 180] (3D plot does not need this correction)
             [new_lat, new_lon] = obj.CleanLatLon(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
-            obj.trajectory = obj.AddLine( ...
-                new_lat, new_lon, ...
-                '-', Tag="Agent Trajectory", LineWidth=linewidth, Color=color, Marker='none', MarkerSize=2, ZOrder=10);
+            obj.trajectory = obj.AddLine(new_lat, new_lon, '-', Tag="Agent Trajectory", Color='m', MarkerSize=2, LineWidth=2, ZOrder=10);
 
             % plot markers for agent start, goal, and current position
-            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'bo', Tag="Agent Start", MarkerSize=8, LineWidth=2, ZOrder=11);
-            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'go', Tag="Agent Goal", MarkerSize=8, LineWidth=2, ZOrder=12);
-            obj.position = obj.AddLine(obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'mo', Tag="Agent Position", MarkerSize=8, LineWidth=2, ZOrder=13);
+            obj.start = obj.AddLine(obj.agent.start_lat, obj.agent.start_lon, 'o', Tag="Agent Start", Color='b', MarkerSize=8, LineWidth=2, ZOrder=11);
+            obj.goal = obj.AddLine(obj.agent.goal_lat, obj.agent.goal_lon, 'o', Tag="Agent Goal", Color='g', MarkerSize=8, LineWidth=2, ZOrder=12);
+            obj.position = obj.AddLine(obj.agent.trajectory_lat(end), wrapTo180(obj.agent.trajectory_lon(end)), 'o', Tag="Agent Position", Color='m', MarkerSize=8, LineWidth=2, ZOrder=13);
 
             % add tooltips if the axes support them
             if isprop(obj.start, "DataTipTemplate")
