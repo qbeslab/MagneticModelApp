@@ -261,6 +261,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             lon = obj.magmodel.sample_longitudes;
             dF = obj.magmodel.sample_gradients.F_TOTAL;
             dI = obj.magmodel.sample_gradients.I_INCL;
+            D = obj.magmodel.samples.D_DECL;
             a = obj.agent;
             f = @a.ComputeEigenvalues;
 
@@ -270,7 +271,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             jmax = length(lon);
             parfor i = 1:imax
                 for j = 1:jmax
-                    ev = f(dF(:, i, j), dI(:, i, j));
+                    ev = f(dF(:, i, j), dI(:, i, j), D(i, j));
                     evreal = real(ev);
                     evimag = imag(ev);
                     is_unstable = evreal(1) > 0 || evreal(2) > 0;

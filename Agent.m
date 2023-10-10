@@ -14,13 +14,17 @@ classdef Agent < handle
         goal_lon double
         trajectory_lat (:,1) double
         trajectory_lon (:,1) double
+        start_D_DECL double
         start_I_INCL double
         start_F_TOTAL double
+        goal_D_DECL double
         goal_I_INCL double
         goal_F_TOTAL double
+        current_D_DECL double
         current_I_INCL double
         current_F_TOTAL double
         A (2,2) double = [1, 0; 0, 1]  % TODO scale properly
+        use_magnetic_north matlab.lang.OnOffSwitchState = 'off'
         max_speed double = 1/10  % TODO scale properly
         time_step double = 1
         sample_velocities (:,:,:) double
@@ -77,7 +81,8 @@ classdef Agent < handle
             obj.start_lat = lat;
             obj.start_lon = lon;
 
-            [~, ~, ~, ~, ~, I, F] = obj.magmodel.EvaluateModel(obj.start_lat, obj.start_lon);
+            [~, ~, ~, ~, D, I, F] = obj.magmodel.EvaluateModel(obj.start_lat, obj.start_lon);
+            obj.start_D_DECL = D;
             obj.start_I_INCL = I;
             obj.start_F_TOTAL = F;
 
@@ -106,17 +111,18 @@ classdef Agent < handle
             obj.goal_lat = lat;
             obj.goal_lon = lon;
 
-            [~, ~, ~, ~, ~, I, F] = obj.magmodel.EvaluateModel(obj.goal_lat, obj.goal_lon);
+            [~, ~, ~, ~, D, I, F] = obj.magmodel.EvaluateModel(obj.goal_lat, obj.goal_lon);
+            obj.goal_D_DECL = D;
             obj.goal_I_INCL = I;
             obj.goal_F_TOTAL = F;
 
             if obj.verbose
                 [dFdx, dFdy, dIdx, dIdy] = obj.magmodel.EstimateGradients(obj.goal_lat, obj.goal_lon);
-                ev = obj.ComputeEigenvalues([dFdx, dFdy], [dIdx, dIdy]);
+                ev = obj.ComputeEigenvalues([dFdx, dFdy], [dIdx, dIdy], D);
                 disp('=== GOAL SET ===')
                 disp(['Latitude: ', char(string(obj.goal_lat)), '  Longitude: ', char(string(obj.goal_lon))]);
                 disp(['Inclination: ', char(string(round(obj.goal_I_INCL, 2))), '°  Intensity: ', char(string(round(obj.goal_F_TOTAL, 2))), ' μT']);
-                disp(['Eigenvalues (with current A): ', num2str(ev(1)), ', ', num2str(ev(2))]);
+                disp(['Eigenvalues (with current A and use_magnetic_north setting): ', num2str(ev(1)), ', ', num2str(ev(2))]);
             end
 
             notify(obj, "GoalChanged");
@@ -128,10 +134,19 @@ classdef Agent < handle
             notify(obj, "NavigationChanged");
         end
 
+        function set.use_magnetic_north(obj, use_magnetic_north)
+            %SET.USE_MAGNETIC_NORTH Set the use_magnetic_north flag, which
+            % controls whether headings are calculated relative to true
+            % north or magnetic north.
+            obj.use_magnetic_north = use_magnetic_north;
+            notify(obj, "NavigationChanged");
+        end
+
         function Reset(obj)
             %RESET Reset trajectory to initial conditions
             obj.trajectory_lat = obj.start_lat;
             obj.trajectory_lon = obj.start_lon;
+            obj.current_D_DECL = obj.start_D_DECL;
             obj.current_I_INCL = obj.start_I_INCL;
             obj.current_F_TOTAL = obj.start_F_TOTAL;
 
@@ -161,7 +176,8 @@ classdef Agent < handle
                 obj.trajectory_lon = [obj.trajectory_lon; new_lon];
                 % [obj.trajectory_lat, obj.trajectory_lon] = interpm(obj.trajectory_lat, obj.trajectory_lon, 1, 'gc');
     
-                [~, ~, ~, ~, ~, I, F] = obj.magmodel.EvaluateModel(new_lat, new_lon);
+                [~, ~, ~, ~, D, I, F] = obj.magmodel.EvaluateModel(new_lat, new_lon);
+                obj.current_D_DECL = D;
                 obj.current_I_INCL = I;
                 obj.current_F_TOTAL = F;
             end
@@ -208,7 +224,8 @@ classdef Agent < handle
                 obj.trajectory_lon = [obj.trajectory_lon; new_lon];
                 % [obj.trajectory_lat, obj.trajectory_lon] = interpm(obj.trajectory_lat, obj.trajectory_lon, 1, 'gc');
     
-                [~, ~, ~, ~, ~, I, F] = obj.magmodel.EvaluateModel(new_lat, new_lon);
+                [~, ~, ~, ~, D, I, F] = obj.magmodel.EvaluateModel(new_lat, new_lon);
+                obj.current_D_DECL = D;
                 obj.current_I_INCL = I;
                 obj.current_F_TOTAL = F;
 
@@ -218,23 +235,33 @@ classdef Agent < handle
             notify(obj, "TrajectoryChanged");
         end
 
-        function velocity = ComputeVelocity(obj, goal_I_INCL, goal_F_TOTAL, current_I_INCL, current_F_TOTAL)
+        function velocity = ComputeVelocity(obj, goal_I_INCL, goal_F_TOTAL, current_I_INCL, current_F_TOTAL, current_D_DECL)
             %COMPUTEVELOCITY Calculate the agent's velocity
             if nargin == 1
                 goal_I_INCL = obj.goal_I_INCL;
                 goal_F_TOTAL = obj.goal_F_TOTAL;
                 current_I_INCL = obj.current_I_INCL;
                 current_F_TOTAL = obj.current_F_TOTAL;
+                current_D_DECL = obj.current_D_DECL;
             end
-            velocity = obj.A * [goal_F_TOTAL-current_F_TOTAL;
-                                goal_I_INCL-current_I_INCL];
+            if ~obj.use_magnetic_north
+                rotation_matrix = [1, 0;
+                                   0, 1];
+            else
+                % TODO: See WMM2020 Technical Report on grid variation/
+                % grivation for corrections near the poles
+                rotation_matrix = [cosd(-current_D_DECL), -sind(-current_D_DECL);
+                                   sind(-current_D_DECL),  cosd(-current_D_DECL)];
+            end
+            velocity = rotation_matrix * obj.A * [goal_F_TOTAL-current_F_TOTAL;
+                                                  goal_I_INCL-current_I_INCL];
             if norm(velocity) > obj.max_speed
                 % limit the agent's speed to a maximum value
                 velocity = obj.max_speed * velocity/norm(velocity);
             end
         end
 
-        function ev = ComputeEigenvalues(obj, dF, dI)
+        function ev = ComputeEigenvalues(obj, dF, dI, D)
             %COMPUTEEIGENVALUES Compute the eigenvalues of the linearized velocity in a location with the given magnetic field property gradients.
 
             dFdx = dF(1);
@@ -247,13 +274,25 @@ classdef Agent < handle
             % %   with the numerical approach can sometimes result in
             % %   non-zero values, especially when agent.A is large, which is
             % %   problematic for stability classification
-            % jacobian = -obj.A * [dFdx, dFdy; dIdx, dIdy];
+            % if ~obj.use_magnetic_north
+            %     jacobian = -obj.A * [dFdx, dFdy; dIdx, dIdy];
+            % else
+            %     rotation_matrix = [cosd(-D), -sind(-D);
+            %                        sind(-D),  cosd(-D)];
+            %     jacobian = -rotation_matrix * obj.A * [dFdx, dFdy; dIdx, dIdy];
+            % end
             % ev = eig(jacobian);
 
             % find eigenvalues formulaically, with matrix multiplication
             % - this approach seems to reliably compute eigenvalues that
             %   should be exactly zero (e.g., when detJ is zero)
-            jacobian = -obj.A * [dFdx, dFdy; dIdx, dIdy];
+            if ~obj.use_magnetic_north
+                jacobian = -obj.A * [dFdx, dFdy; dIdx, dIdy];
+            else
+                rotation_matrix = [cosd(-D), -sind(-D);
+                                   sind(-D),  cosd(-D)];
+                jacobian = -rotation_matrix * obj.A * [dFdx, dFdy; dIdx, dIdy];
+            end
             trJ = trace(jacobian);
             detJ = det(jacobian);
             ev = [(trJ - sqrt(trJ^2 - 4 * detJ)) / 2;
@@ -266,8 +305,16 @@ classdef Agent < handle
             % b = obj.A(1, 2);
             % c = obj.A(2, 1);
             % d = obj.A(2, 2);
-            % trJ = -(a * dFdx + b * dIdx + c * dFdy + d * dIdy);
-            % detJ = (a * d - b * c) * (dFdx * dIdy - dFdy * dIdx);
+            % if ~obj.use_magnetic_north
+            %     trJ = -(a * dFdx + b * dIdx + c * dFdy + d * dIdy);
+            %     detJ = (a * d - b * c) * (dFdx * dIdy - dFdy * dIdx);
+            % else
+            %     trJ = -((a*cosd(D) + c*sind(D)) * dFdx + ...
+            %             (b*cosd(D) + d*sind(D)) * dIdx + ...
+            %             (c*cosd(D) - a*sind(D)) * dFdy + ...
+            %             (d*cosd(D) - b*sind(D)) * dIdy);
+            %     detJ = (cosd(D)^2 + sind(D)^2) * (a * d - b * c) * (dFdx * dIdy - dFdy * dIdx);
+            % end
             % ev = [(trJ - sqrt(trJ^2 - 4 * detJ)) / 2;
             %       (trJ + sqrt(trJ^2 - 4 * detJ)) / 2];
 
@@ -305,6 +352,7 @@ classdef Agent < handle
             lat = obj.magmodel.sample_latitudes;
             lon = obj.magmodel.sample_longitudes;
 
+            D_DECL = obj.magmodel.samples.D_DECL;
             I_INCL = obj.magmodel.samples.I_INCL;
             F_TOTAL = obj.magmodel.samples.F_TOTAL;
             f = @obj.ComputeVelocity;
@@ -316,9 +364,10 @@ classdef Agent < handle
             jmax = length(lon);
             parfor i = 1:imax
                 for j = 1:jmax
+                    D = D_DECL(i, j);
                     I = I_INCL(i, j);
                     F = F_TOTAL(i, j);
-                    velocities(:, i, j) = f(goal_I, goal_F, I, F);
+                    velocities(:, i, j) = f(goal_I, goal_F, I, F, D);
                 end
             end
 

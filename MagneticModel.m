@@ -142,12 +142,12 @@ classdef MagneticModel < handle
             parfor i = 1:imax
                 for j = 1:jmax
                     % [X, Y, Z, H, D, I, F] = f(lat(i), lon(j));
-                    [~, ~, ~, ~, ~, I, F] = f(lat(i), lon(j));
+                    [~, ~, ~, ~, D, I, F] = f(lat(i), lon(j));
                     % X_NORTH(i, j) = X;
                     % Y_EAST (i, j) = Y;
                     % Z_DOWN (i, j) = Z;
                     % H_HORIZ(i, j) = H;
-                    % D_DECL (i, j) = D;
+                    D_DECL (i, j) = D;
                     I_INCL (i, j) = I;
                     F_TOTAL(i, j) = F;
                 end
@@ -158,6 +158,7 @@ classdef MagneticModel < handle
             %     H_HORIZ=H_HORIZ, D_DECL=D_DECL, I_INCL=I_INCL, ...
             %     F_TOTAL=F_TOTAL);
             obj.samples = struct( ...
+                D_DECL=D_DECL, ...
                 I_INCL=I_INCL, ...
                 F_TOTAL=F_TOTAL);
         end
