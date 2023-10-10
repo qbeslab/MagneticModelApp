@@ -25,12 +25,6 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 parent = gcf;
             end
             obj@AbstractMagneticMap(magmodel, agent, parent);
-
-            obj.colors.surface_mesh.terrain.land = "#D2E9B8";  % muted green
-            obj.colors.surface_mesh.terrain.ocean = "#9DD7EE";  % muted blue
-            
-            % obj.colors.surface_mesh.terrain.land = 'w';  % white
-            % obj.colors.surface_mesh.terrain.ocean = "#DDDDDD";  % light gray
         end
         
         function InitializeAxes(obj, parent)
@@ -41,6 +35,12 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             %   creation, since axesm() has no parameter for specifying a
             %   parent
             tempf = figure(Visible='off');
+
+            obj.colors.surface_mesh.terrain.land = "#D2E9B8";  % muted green
+            obj.colors.surface_mesh.terrain.ocean = "#9DD7EE";  % muted blue
+            
+            % obj.colors.surface_mesh.terrain.land = 'w';  % white
+            % obj.colors.surface_mesh.terrain.ocean = "#DDDDDD";  % light gray
             
             obj.projection = "globe";
             % obj.projection = "robinson";
