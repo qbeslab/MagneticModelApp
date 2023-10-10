@@ -16,6 +16,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         surface_mesh_type
         vector_field
         vector_field_type
+        vector_field_downsample_factor double = 5
     end
     
     methods
@@ -231,10 +232,13 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             end
         end
 
-        function SetVectorField(obj, vector_field_type)
+        function SetVectorField(obj, vector_field_type, downsample_factor)
             %SETVECTORFIELD ...
 
             obj.vector_field_type = vector_field_type;
+            if nargin == 3
+                obj.vector_field_downsample_factor = downsample_factor;
+            end
             switch obj.vector_field_type
                 case "none"
                     % clear the vector field
@@ -353,7 +357,12 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 dlon = squeeze(obj.agent.sample_velocities(1, :, :));
                 dlat = squeeze(obj.agent.sample_velocities(2, :, :));
             
-                obj.vector_field = quiverm(obj.lat_mesh, obj.lon_mesh, dlat, dlon);
+                obj.vector_field = quiverm( ...
+                    obj.lat_mesh(1:obj.vector_field_downsample_factor:end, 1:obj.vector_field_downsample_factor:end), ...
+                    obj.lon_mesh(1:obj.vector_field_downsample_factor:end, 1:obj.vector_field_downsample_factor:end), ...
+                    dlat(1:obj.vector_field_downsample_factor:end, 1:obj.vector_field_downsample_factor:end), ...
+                    dlon(1:obj.vector_field_downsample_factor:end, 1:obj.vector_field_downsample_factor:end) ...
+                    );
                 color = "#444444";
                 obj.vector_field(1).Color = color;
                 obj.vector_field(2).Color = color;
@@ -398,7 +407,12 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 dFdy = scale * squeeze(obj.magmodel.sample_gradients.F_TOTAL(2, :, :));
 
                 % draw inclination gradient
-                h = quiverm(obj.lat_mesh, obj.lon_mesh, dIdy, dIdx, '-', 0);
+                h = quiverm( ...
+                    obj.lat_mesh(1:obj.vector_field_downsample_factor:end, 1:obj.vector_field_downsample_factor:end), ...
+                    obj.lon_mesh(1:obj.vector_field_downsample_factor:end, 1:obj.vector_field_downsample_factor:end), ...
+                    dIdy(1:obj.vector_field_downsample_factor:end, 1:obj.vector_field_downsample_factor:end), ...
+                    dIdx(1:obj.vector_field_downsample_factor:end, 1:obj.vector_field_downsample_factor:end), ...
+                    '-', 0);
                 color = "#EEEEEE";
                 h(1).Color = color;
                 h(2).Color = color;
@@ -412,7 +426,12 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                 obj.vector_field(2) = h(2);
     
                 % draw intensity gradient
-                h = quiverm(obj.lat_mesh, obj.lon_mesh, dFdy, dFdx, '-', 0);
+                h = quiverm( ...
+                    obj.lat_mesh(1:obj.vector_field_downsample_factor:end, 1:obj.vector_field_downsample_factor:end), ...
+                    obj.lon_mesh(1:obj.vector_field_downsample_factor:end, 1:obj.vector_field_downsample_factor:end), ...
+                    dFdy(1:obj.vector_field_downsample_factor:end, 1:obj.vector_field_downsample_factor:end), ...
+                    dFdx(1:obj.vector_field_downsample_factor:end, 1:obj.vector_field_downsample_factor:end), ...
+                    '-', 0);
                 color = "#444444";
                 h(1).Color = color;
                 h(2).Color = color;
