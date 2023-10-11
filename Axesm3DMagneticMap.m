@@ -274,8 +274,10 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
                     ev = f(dF(:, i, j), dI(:, i, j), D(i, j));
                     evreal = real(ev);
                     evimag = imag(ev);
-                    is_unstable = evreal(1) > 0 || evreal(2) > 0;
-                    is_degenerate = evreal(1) == 0 || evreal(2) == 0;
+                    % is_unstable = evreal(1) > 0 || evreal(2) > 0;
+                    is_unstable = evreal(1) > 1e-12 || evreal(2) > 1e-12;
+                    % is_degenerate = evreal(1) == 0 || evreal(2) == 0;
+                    is_degenerate = abs(evreal(1)) < 1e-12 || abs(evreal(2)) < 1e-12;
                     has_rotation = evimag(1) ~= 0 || evimag(2) ~= 0;
 
                     if is_unstable
