@@ -23,10 +23,14 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         function InitializeAxes(obj, varargin)
             %INITIALIZEAXES Initialize 3D axesm-based map
 
-            [parent, ~] = obj.PopArg(varargin, "Parent", []);
+            [parent, varargin] = obj.PopArg(varargin, "Parent", []);
             if isempty(parent)
                 parent = gcf;
             end
+
+            [obj.projection, ~] = obj.PopArg(varargin, "Projection", "globe");
+            % [obj.projection, ~] = obj.PopArg(varargin, "Projection", "robinson");
+            % [obj.projection, ~] = obj.PopArg(varargin, "Projection", "mercator");
             
             % create a hidden figure to temporarily hold the axesm-based map 
             % - parenthood of the axesm-based map must be transferred after
@@ -39,10 +43,6 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             
             % obj.colors.surface_mesh.terrain.land = 'w';  % white
             % obj.colors.surface_mesh.terrain.ocean = "#DDDDDD";  % light gray
-            
-            obj.projection = "globe";
-            % obj.projection = "robinson";
-            % obj.projection = "mercator";
 
             switch obj.projection
                 case "mercator"
