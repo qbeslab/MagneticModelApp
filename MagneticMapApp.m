@@ -64,6 +64,7 @@ classdef MagneticMapApp < handle
             switch event.Key
                 case 'c'
                     obj.g3D.CenterCameraOnAgent();
+                    obj.gAxesm.CenterCameraOnAgent();
                 case 'g'
                     obj.g3D.SetAgentGoalToCamPos();
                 case 'l'
@@ -71,6 +72,7 @@ classdef MagneticMapApp < handle
                 case 'm'
                     obj.g2D.ToggleAgentTrajectoryMarkers();
                     obj.g3D.ToggleAgentTrajectoryMarkers();
+                    obj.gAxesm.ToggleAgentTrajectoryMarkers();
                 case 'r'
                     obj.agent.Reset();
                 case 's'
