@@ -33,8 +33,8 @@ classdef GeoGlobe3DMagneticMap < AbstractMagneticMap
             new_lon = lon;
         end
 
-        function Lock3DCamera(obj)
-            %LOCK3DCAMERA Prevent auto 3D camera adjustments when plot update
+        function LockCamera(obj)
+            %LOCKCAMERA Prevent auto camera adjustments when plot update
             %   If the camera is moved using the mouse, auto camera
             %   adjustments will resume, and this method should be run
             %   again to stop them.
@@ -57,11 +57,11 @@ classdef GeoGlobe3DMagneticMap < AbstractMagneticMap
 
             drawnow;  % force figure to update immediately
 
-            disp("3D camera locked until manually adjusted");
+            disp("Camera locked until manually adjusted");
         end
 
-        function Center3DCameraOnAgent(obj, height)
-            %CENTER3DCAMERAONAGENT Move the 3D camera to the latest agent position
+        function CenterCameraOnAgent(obj, height)
+            %CENTERCAMERAONAGENT Move the camera to the latest agent position
             if nargin < 2
                 height = 7e6;  % meters above reference ellipsoid
             end
@@ -73,16 +73,16 @@ classdef GeoGlobe3DMagneticMap < AbstractMagneticMap
             drawnow;  % force figure to update immediately
         end
 
-        function SetAgentStartTo3DCamPos(obj)
-            %SETAGENTSTARTTO3DCAMPOS Set the agent start position to the current 3D camera latitude and longitude
-            obj.Lock3DCamera;
+        function SetAgentStartToCamPos(obj)
+            %SETAGENTSTARTTOCAMPOS Set the agent start position to the current camera latitude and longitude
+            obj.LockCamera;
             [lat, lon, ~] = campos(obj.ax);
             obj.agent.SetStart(lat, lon);
         end
 
-        function SetAgentGoalTo3DCamPos(obj)
-            %SETAGENTGOALTO3DCAMPOS Set the agent goal to the current 3D camera latitude and longitude
-            obj.Lock3DCamera;
+        function SetAgentGoalToCamPos(obj)
+            %SETAGENTGOALTOCAMPOS Set the agent goal to the current camera latitude and longitude
+            obj.LockCamera;
             [lat, lon, ~] = campos(obj.ax);
             obj.agent.SetGoal(lat, lon);
         end

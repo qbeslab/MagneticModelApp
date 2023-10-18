@@ -11,7 +11,7 @@ classdef MagneticMapApp < handle
         gui matlab.ui.Figure
         g2D GeoAxes2DMagneticMap
         g3D GeoGlobe3DMagneticMap
-        gAxesm Axesm3DMagneticMap
+        gAxesm AxesmMagneticMap
     end
     
     methods
@@ -27,11 +27,11 @@ classdef MagneticMapApp < handle
             ug = uigridlayout(obj.gui, [1, 3]);
             p1 = uipanel(ug, Title="GeoAxes2DMagneticMap");
             p2 = uipanel(ug, Title="GeoGlobe3DMagneticMap");
-            p3 = uipanel(ug, Title="Axesm3DMagneticMap");
+            p3 = uipanel(ug, Title="AxesmMagneticMap");
 
             obj.g2D = GeoAxes2DMagneticMap(magmodel, agent, Parent=p1);
             obj.g3D = GeoGlobe3DMagneticMap(magmodel, agent, Parent=p2);
-            obj.gAxesm = Axesm3DMagneticMap(magmodel, agent, Parent=p3);
+            obj.gAxesm = AxesmMagneticMap(magmodel, agent, Parent=p3);
 
             % ensure changing either 2D or 3D basemap updates both
             addlistener(obj.g2D.ax, 'Basemap', 'PostSet', @obj.SyncBaseMaps);
@@ -40,10 +40,10 @@ classdef MagneticMapApp < handle
             % add keyboard shortcuts
             obj.gui.KeyPressFcn = @obj.ProcessKeyPress;
 
-            % advance agent towards goal and then center the 3D camera
+            % advance agent towards goal and then center the cameras
             obj.agent.Step(300);
-            obj.g3D.Center3DCameraOnAgent();
-            obj.gAxesm.Center3DCameraOnAgent();
+            obj.g3D.CenterCameraOnAgent();
+            obj.gAxesm.CenterCameraOnAgent();
 
             % % add interactivity
             % % obj.g2D.ax.ButtonDownFcn = @obj.ReportEvent;
@@ -63,18 +63,18 @@ classdef MagneticMapApp < handle
             %PROCESSKEYPRESS Process keyboard shortcuts
             switch event.Key
                 case 'c'
-                    obj.g3D.Center3DCameraOnAgent();
+                    obj.g3D.CenterCameraOnAgent();
                 case 'g'
-                    obj.g3D.SetAgentGoalTo3DCamPos();
+                    obj.g3D.SetAgentGoalToCamPos();
                 case 'l'
-                    obj.g3D.Lock3DCamera();
+                    obj.g3D.LockCamera();
                 case 'm'
                     obj.g2D.ToggleAgentTrajectoryMarkers();
                     obj.g3D.ToggleAgentTrajectoryMarkers();
                 case 'r'
                     obj.agent.Reset();
                 case 's'
-                    obj.g3D.SetAgentStartTo3DCamPos();
+                    obj.g3D.SetAgentStartToCamPos();
                 % case 'x'
                 %     % temporarily change the axesm-based map's parent to a figure
                 %     % - this is necessary because inputm only works inside figures

@@ -18,8 +18,8 @@ end
 
 agent = Agent(magmodel);
 
-map = Axesm3DMagneticMap(magmodel, agent, Projection="globe");
-map.Center3DCameraOnAgent();
+map = AxesmMagneticMap(magmodel, agent, Projection="globe");
+map.CenterCameraOnAgent();
 
 %% METHOD 1: EXPORTGRAPHICS (GIF)
 
@@ -74,11 +74,11 @@ close(v);
 function centerCameraBetweenStartAndGoal(agent, map)
     clat = mean([agent.start_lat, agent.goal_lat]);
     clon = mean([agent.start_lon, agent.goal_lon]);
-    map.Set3DCameraPosition(clat, clon);
+    map.SetCameraPosition(clat, clon);
 end
 
 % function centerCameraOnTrajectory(agent, map)
 %     clat = mean(agent.trajectory_lat);
 %     clon = mean(agent.trajectory_lon);
-%     map.Set3DCameraPosition(clat, clon);
+%     map.SetCameraPosition(clat, clon);
 % end

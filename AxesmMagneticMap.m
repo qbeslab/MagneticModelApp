@@ -1,5 +1,5 @@
-classdef Axesm3DMagneticMap < AbstractMagneticMap
-    %AXESM3DMAGNETICMAP Class for managing a 3D axesm-based plot of the magnetic environment
+classdef AxesmMagneticMap < AbstractMagneticMap
+    %AXESMMAGNETICMAP Class for managing an axesm-based plot of the magnetic environment
     % Required add-ons (use MATLAB's Add-On Explorer to install):
     %   - Mapping Toolbox
     % Optional add-ons (use MATLAB's Add-On Explorer to install):
@@ -21,15 +21,15 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
     
     methods
         function InitializeAxes(obj, varargin)
-            %INITIALIZEAXES Initialize 3D axesm-based map
+            %INITIALIZEAXES Initialize axesm-based map
 
             [parent, varargin] = obj.PopArg(varargin, "Parent", []);
             if isempty(parent)
                 parent = gcf;
             end
 
-            [obj.projection, ~] = obj.PopArg(varargin, "Projection", "globe");
-            % [obj.projection, ~] = obj.PopArg(varargin, "Projection", "robinson");
+            % [obj.projection, ~] = obj.PopArg(varargin, "Projection", "globe");
+            [obj.projection, ~] = obj.PopArg(varargin, "Projection", "robinson");
             % [obj.projection, ~] = obj.PopArg(varargin, "Projection", "mercator");
             
             % create a hidden figure to temporarily hold the axesm-based map 
@@ -67,7 +67,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             % hold(obj.ax);
 
             % move the camera to the origin
-            obj.Set3DCameraPosition(0, 0);
+            obj.SetCameraPosition(0, 0);
 
             % transfer parenthood of the axesm-based map to the specified parent
             obj.ax.Parent = parent;
@@ -121,7 +121,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         end
 
         function [new_lat, new_lon] = CleanLatLon(~, lat, lon)
-            %CLEANLATLON No cleaning necessary on 3D plots, so do nothing
+            %CLEANLATLON No cleaning necessary on axesm-based plots, so do nothing
             new_lat = lat;
             new_lon = lon;
         end
@@ -151,7 +151,7 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
         function UpdateAgentTrajectory(obj, ~, ~)
             %UPDATEAGENTTRAJECTORY Update plots/markers of agent trajectory and current position
 
-            % coords are cleaned up here since otherwise the 2D plot would
+            % coords are cleaned up here since otherwise some 2D plots would
             % draw the trajectory off screen when longitude is outside
             % [-180, 180] (3D plot does not need this correction)
             [new_lat, new_lon] = obj.CleanLatLon(obj.agent.trajectory_lat, obj.agent.trajectory_lon);
@@ -453,8 +453,8 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             end
         end
 
-        function Set3DCameraPosition(obj, lat, lon)
-            %SET3DCAMERAPOSITION Move the 3D camera to a given coordinate
+        function SetCameraPosition(obj, lat, lon)
+            %SETCAMERAPOSITION Move the camera to a given coordinate
 
             % temporarily change the axesm-based map's parent to a hidden figure
             % - this is necessary when the original parent is a
@@ -473,9 +473,9 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
             delete(tempf);
         end
 
-        function Center3DCameraOnAgent(obj)
-            %CENTER3DCAMERAONAGENT Move the 3D camera to the latest agent position
-            obj.Set3DCameraPosition(obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end));
+        function CenterCameraOnAgent(obj)
+            %CENTERCAMERAONAGENT Move the camera to the latest agent position
+            obj.SetCameraPosition(obj.agent.trajectory_lat(end), obj.agent.trajectory_lon(end));
         end
 
         function setm(obj, varargin)

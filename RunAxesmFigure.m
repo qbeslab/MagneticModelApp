@@ -25,7 +25,7 @@ end
 verbose = 'on';
 agent = Agent(magmodel, verbose);
 
-projection = "globe";
-% projection = "robinson";
+% projection = "globe";
+projection = "robinson";
 % projection = "mercator";
-g = Axesm3DMagneticMap(magmodel, agent, Projection=projection);
+g = AxesmMagneticMap(magmodel, agent, Projection=projection);
