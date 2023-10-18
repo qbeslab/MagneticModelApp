@@ -20,16 +20,13 @@ classdef Axesm3DMagneticMap < AbstractMagneticMap
     end
     
     methods
-        function obj = Axesm3DMagneticMap(magmodel, agent, parent)
-            %AXESM3DMAGNETICMAP Construct an instance of this class
-            if nargin == 2
+        function InitializeAxes(obj, varargin)
+            %INITIALIZEAXES Initialize 3D axesm-based map
+
+            [parent, ~] = obj.PopArg(varargin, "Parent", []);
+            if isempty(parent)
                 parent = gcf;
             end
-            obj@AbstractMagneticMap(magmodel, agent, parent);
-        end
-        
-        function InitializeAxes(obj, parent)
-            %INITIALIZEAXES Initialize 3D axesm-based map
             
             % create a hidden figure to temporarily hold the axesm-based map 
             % - parenthood of the axesm-based map must be transferred after

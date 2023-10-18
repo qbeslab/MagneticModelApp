@@ -20,13 +20,13 @@ classdef (Abstract) AbstractMagneticMap < handle
     end
 
     methods (Abstract)
-        InitializeAxes(obj, parent)
+        InitializeAxes(obj, varargin)
         line = AddLine(obj, lat, lon, linespec, varargin)
         [new_lat, new_lon] = CleanLatLon(obj, lat, lon)
     end
     
     methods
-        function obj = AbstractMagneticMap(magmodel, agent, parent)
+        function obj = AbstractMagneticMap(magmodel, agent, varargin)
             %ABSTRACTMAGNETICMAP Construct an instance of this class
             obj.magmodel = magmodel;
             obj.agent = agent;
@@ -56,7 +56,7 @@ classdef (Abstract) AbstractMagneticMap < handle
             % obj.colors.nullclines.x = "#FF0000";  % red
             % obj.colors.nullclines.y = "#FF8000";  % orange
 
-            obj.InitializeAxes(parent);
+            obj.InitializeAxes(varargin{:});
 
             obj.SetLevelCurves("contours");
             % obj.SetLevelCurves("parallelgradients");

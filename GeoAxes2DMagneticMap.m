@@ -6,16 +6,14 @@ classdef GeoAxes2DMagneticMap < AbstractMagneticMap
     %   - MATLAB Basemap Data - colorterrain (install for offline use)
     
     methods
-        function obj = GeoAxes2DMagneticMap(magmodel, agent, parent)
-            %GEOAXES2DMAGNETICMAP Construct an instance of this class
-            if nargin == 2
+        function InitializeAxes(obj, varargin)
+            %INITIALIZEAXES Initialize GeographicAxes
+
+            [parent, ~] = obj.PopArg(varargin, "Parent", []);
+            if isempty(parent)
                 parent = gcf;
             end
-            obj@AbstractMagneticMap(magmodel, agent, parent);
-        end
 
-        function InitializeAxes(obj, parent)
-            %INITIALIZEAXES Initialize GeographicAxes
             obj.ax = geoaxes(parent, Basemap="colorterrain");
             obj.ax.InnerPosition = obj.ax.OuterPosition;
             geolimits(obj.ax, [-70, 70], [-180, 180]);  % aspect ratio constraints often override this

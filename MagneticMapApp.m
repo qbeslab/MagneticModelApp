@@ -29,9 +29,9 @@ classdef MagneticMapApp < handle
             p2 = uipanel(ug, Title="GeoGlobe3DMagneticMap");
             p3 = uipanel(ug, Title="Axesm3DMagneticMap");
 
-            obj.g2D = GeoAxes2DMagneticMap(magmodel, agent, p1);
-            obj.g3D = GeoGlobe3DMagneticMap(magmodel, agent, p2);
-            obj.gAxesm = Axesm3DMagneticMap(magmodel, agent, p3);
+            obj.g2D = GeoAxes2DMagneticMap(magmodel, agent, Parent=p1);
+            obj.g3D = GeoGlobe3DMagneticMap(magmodel, agent, Parent=p2);
+            obj.gAxesm = Axesm3DMagneticMap(magmodel, agent, Parent=p3);
 
             % ensure changing either 2D or 3D basemap updates both
             addlistener(obj.g2D.ax, 'Basemap', 'PostSet', @obj.SyncBaseMaps);

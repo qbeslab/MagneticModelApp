@@ -6,16 +6,14 @@ classdef GeoGlobe3DMagneticMap < AbstractMagneticMap
     %   - MATLAB Basemap Data - colorterrain (install for offline use)
     
     methods
-        function obj = GeoGlobe3DMagneticMap(magmodel, agent, parent)
-            %GEOGLOBE3DMAGNETICMAP Construct an instance of this class
-            if nargin == 2
-                parent = uifigure;
-            end
-            obj@AbstractMagneticMap(magmodel, agent, parent);
-        end
-
-        function InitializeAxes(obj, parent)
+        function InitializeAxes(obj, varargin)
             %INITIALIZEAXES Initialize GeographicGlobe
+
+            [parent, ~] = obj.PopArg(varargin, "Parent", []);
+            if isempty(parent)
+                parent = obj.gcuif;
+            end
+
             obj.ax = geoglobe(parent, Basemap="colorterrain", Terrain="none");  % Terrain="none" flattens terrain so it does not occlude contours and trajectories
             campos(obj.ax, 0, 0, 1e7);  % manually setting a camera position right away bypasses camera animation, speeding up initial plotting
             % obj.ax.Position = [0 0 1 1];
@@ -87,6 +85,25 @@ classdef GeoGlobe3DMagneticMap < AbstractMagneticMap
             obj.Lock3DCamera;
             [lat, lon, ~] = campos(obj.ax);
             obj.agent.SetGoal(lat, lon);
+        end
+
+        function h = gcuif(~)
+            %GCUIF Get handle to current uifigure
+            %   Equivalent to gcf in that an existing uifigure will be used
+            %   preferentially over creating a new one
+
+            % search for an existing uifigure
+            figs = findall(groot, "Type", "figure");
+            for i = 1:numel(figs)
+                if matlab.ui.internal.isUIFigure(figs(i))
+                    % return the found uifigure
+                    h = figs(i);
+                    return
+                end
+            end
+
+            % no existing uifigure found, so create one
+            h = uifigure();
         end
     end
 end
