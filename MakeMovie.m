@@ -18,7 +18,7 @@ end
 
 agent = Agent(magmodel);
 
-map = Axesm3DMagneticMap(magmodel, agent);
+map = Axesm3DMagneticMap(magmodel, agent, Projection="globe");
 map.Center3DCameraOnAgent();
 
 %% METHOD 1: EXPORTGRAPHICS (GIF)
