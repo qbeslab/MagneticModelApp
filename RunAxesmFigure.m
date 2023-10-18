@@ -15,8 +15,8 @@ else
     % sample_resolution = 8;  % very coarse
     % sample_resolution = 4;  % coarse
     % sample_resolution = 2;  % medium
-    sample_resolution = 1;  % fine
-    % sample_resolution = 0.5;  % very fine
+    % sample_resolution = 1;  % fine
+    sample_resolution = 0.5;  % very fine
     % sample_resolution = 0.25;  % ultra fine
     magmodel = MagneticModel(sample_resolution);
     save("magmodel.mat", "magmodel");
