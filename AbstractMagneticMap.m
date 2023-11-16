@@ -347,7 +347,7 @@ classdef (Abstract) AbstractMagneticMap < handle
                         );
                     if isprop(line, "DataTipTemplate")
                         % add tooltips if the axes support them
-                        line.DataTipTemplate.DataTipRows = [dataTipTextRow('FIXED POINT', ''); line.DataTipTemplate.DataTipRows];
+                        line.DataTipTemplate.DataTipRows = [dataTipTextRow('EQUILIBRIUM POINT', ''); line.DataTipTemplate.DataTipRows];
                     end
                     obj.level_curves = [obj.level_curves; line];
                 catch
