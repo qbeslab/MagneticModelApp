@@ -162,7 +162,7 @@ classdef Agent < handle
 
             for i = 1:n
                 velocity = obj.ComputeVelocity();
-                % disp(['velocity: ', obj.ApproxDirectionString(velocity), ' [', char(string(velocity(1))), ', ', char(string(velocity(2))), ']']);
+                % disp(['velocity: ', obj.ApproxBearingString(obj.Bearing(velocity)), ' [', char(string(velocity(1))), ', ', char(string(velocity(2))), ']']);
     
                 new_lon = obj.trajectory_lon(end) + velocity(1) * obj.time_step;
                 new_lat = obj.trajectory_lat(end) + velocity(2) * obj.time_step;
@@ -206,7 +206,7 @@ classdef Agent < handle
                 end
 
                 velocity = obj.ComputeVelocity();
-                % disp(['velocity: ', obj.ApproxDirectionString(velocity), ' [', char(string(velocity(1))), ', ', char(string(velocity(2))), ']']);
+                % disp(['velocity: ', obj.ApproxBearingString(obj.Bearing(velocity)), ' [', char(string(velocity(1))), ', ', char(string(velocity(2))), ']']);
                 if norm(velocity) < velocity_threshold
                     % disp(['terminating: velocity dropped below threshold after ', num2str(steps_taken), '/', num2str(max_steps), ' steps (equilibrium possibly reached)']);
                     break
@@ -375,45 +375,49 @@ classdef Agent < handle
             notify(obj, "VelocitiesChanged");
         end
 
-        function dir_string = ApproxDirectionString(~, velocity)
-            %APPROXDIRECTIONSTRING Convert a velocity vector to an approximate string representation
-            angle = atan2d(velocity(2), velocity(1));
-            angle = round(angle/22.5)*22.5;
-            switch angle
+        function bearing = Bearing(~, velocity)
+            %BEARING Convert a velocity vector to an angle measured in degrees clockwise from north
+            bearing = mod(90 - atan2d(velocity(2), velocity(1)), 360);
+        end
+
+        function bearing_string = ApproxBearingString(~, bearing)
+            %APPROXBEARINGSTRING Convert a bearing to an approximate string representation
+            bearing = round(bearing/22.5)*22.5;
+            switch bearing
                 case 0
-                    dir_string = 'E';
+                    bearing_string = 'N';
                 case 22.5
-                    dir_string = 'ENE';
+                    bearing_string = 'NNE';
                 case 45
-                    dir_string = 'NE';
+                    bearing_string = 'NE';
                 case 67.5
-                    dir_string = 'NNE';
+                    bearing_string = 'ENE';
                 case 90
-                    dir_string = 'N';
+                    bearing_string = 'E';
                 case 112.5
-                    dir_string = 'NNW';
+                    bearing_string = 'ESE';
                 case 135
-                    dir_string = 'NW';
+                    bearing_string = 'SE';
                 case 157.5
-                    dir_string = 'WNW';
+                    bearing_string = 'SSE';
                 case 180
-                    dir_string = 'W';
-                case -180
-                    dir_string = 'W';
-                case -157.5
-                    dir_string = 'WSW';
-                case -135
-                    dir_string = 'SW';
-                case -112.5
-                    dir_string = 'SSW';
-                case -90
-                    dir_string = 'S';
-                case -67.5
-                    dir_string = 'SSE';
-                case -45
-                    dir_string = 'SE';
-                case -22.5
-                    dir_string = 'ESE';
+                    bearing_string = 'S';
+                case 202.5
+                    bearing_string = 'SSW';
+                case 225
+                    bearing_string = 'SW';
+                case 247.5
+                    bearing_string = 'WSW';
+                case 270
+                    bearing_string = 'W';
+                case 292.5
+                    bearing_string = 'WNW';
+                case 315
+                    bearing_string = 'NW';
+                case 337.5
+                    bearing_string = 'NNW';
+                case 360
+                    bearing_string = 'N';
             end
         end
     end
