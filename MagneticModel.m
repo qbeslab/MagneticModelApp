@@ -58,7 +58,7 @@ classdef MagneticModel < handle
 
             obj.height = 0;  % altitude in meters
 
-            if nargin == 1
+            if nargin >= 1
                 obj.sample_resolution = sample_resolution;
             else
                 % default value

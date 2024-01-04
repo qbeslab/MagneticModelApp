@@ -7,8 +7,10 @@
 overwrite_files = false;
 
 sample_resolution = 1;
-
 years = 1900:2025;
+
+% sample_resolution = 0.25;
+% years = 1900:40:2020;
 
 n = length(years);
 w = waitbar(0, ['Generating magnetic models for ', num2str(n), ' dates...']);
