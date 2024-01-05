@@ -253,5 +253,22 @@ classdef MagneticModel < handle
             %   don't understand how it works!
             angle = atan2d(det([U, V]), dot(U, V));  % between -180 and 180 degrees
         end
+
+        function [lat, lon] = FindCoords(obj, F_TOTAL_target, I_INCL_target, lat0, lon0, options)
+            if nargin < 6
+                % e.g., optimset(TolFun=1e-16, TolX=1e-16, MaxIter=1e4, Display='final')
+                options = optimset();
+            end
+            latlon = fminsearch(@(latlon) FindCoordsError(obj, latlon, F_TOTAL_target, I_INCL_target), [lat0, lon0], options);
+            lat = latlon(1);
+            lon = latlon(2);
+        end
+        
+        function error = FindCoordsError(obj, latlon, F_TOTAL_target, I_INCL_target)
+            lat = latlon(1);
+            lon = latlon(2);
+            [~, ~, ~, ~, ~, I, F] = obj.EvaluateModel(lat, lon);
+            error = (F - F_TOTAL_target)^2 + (I - I_INCL_target)^2;
+        end
     end
 end
