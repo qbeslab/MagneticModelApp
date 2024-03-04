@@ -15,6 +15,8 @@ years = 1900:2025;
 n = length(years);
 w = waitbar(0, ['Generating magnetic models for ', num2str(n), ' dates...']);
 
+if ~isfolder("magmodels/"); mkdir("magmodels"); end
+
 for i = 1:n
     year = years(i);
     datestr = [num2str(year), '-01-01'];
