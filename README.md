@@ -2,7 +2,7 @@
 
 This repository holds code that performs simulations and generates figures published in
 
-> Gill, J. P., & Taylor, B. K. (2024). Navigation by magnetic signatures in a realistic model of Earth's magnetic field. _Bioinspiration & Biomimetics_. https://doi.org/10.1088/1748-3190/ad3120
+> Gill, J. P., & Taylor, B. K. (2024). Navigation by magnetic signatures in a realistic model of Earth's magnetic field. _Bioinspiration & Biomimetics_, **19**(3), 036006. https://doi.org/10.1088/1748-3190/ad3120
 
 For the version of the code used at time of publication, see the [Gill-and-Taylor-2024-Bioinspir-Biomim](https://github.com/qbeslab/MagneticModelApp/tree/Gill-and-Taylor-2024-Bioinspir-Biomim) branch of the repository.
 
