@@ -17,6 +17,7 @@ classdef AxesmMagneticMap < AbstractMagneticMap
         vector_field
         vector_field_type
         vector_field_downsample_factor double = 5
+        vector_field_gradients_scale double = 0.5
     end
     
     methods
@@ -229,12 +230,15 @@ classdef AxesmMagneticMap < AbstractMagneticMap
             end
         end
 
-        function SetVectorField(obj, vector_field_type, downsample_factor)
+        function SetVectorField(obj, vector_field_type, downsample_factor, gradients_scale)
             %SETVECTORFIELD ...
 
             obj.vector_field_type = vector_field_type;
-            if nargin == 3
+            if nargin >= 3
                 obj.vector_field_downsample_factor = downsample_factor;
+            end
+            if nargin == 4
+                obj.vector_field_gradients_scale = gradients_scale;
             end
             switch obj.vector_field_type
                 case "none"
@@ -400,11 +404,10 @@ classdef AxesmMagneticMap < AbstractMagneticMap
                 % by scaling the gradients manually here and passing 0 to
                 % quiverm's scale parameter, we ensures inclination and
                 % intensity gradients are on an identical custom scale
-                scale = 0.5;
-                dIdx = scale * squeeze(obj.magmodel.sample_gradients.I_INCL(1, :, :));
-                dIdy = scale * squeeze(obj.magmodel.sample_gradients.I_INCL(2, :, :));
-                dFdx = scale * squeeze(obj.magmodel.sample_gradients.F_TOTAL(1, :, :));
-                dFdy = scale * squeeze(obj.magmodel.sample_gradients.F_TOTAL(2, :, :));
+                dIdx = obj.vector_field_gradients_scale * squeeze(obj.magmodel.sample_gradients.I_INCL(1, :, :));
+                dIdy = obj.vector_field_gradients_scale * squeeze(obj.magmodel.sample_gradients.I_INCL(2, :, :));
+                dFdx = obj.vector_field_gradients_scale * squeeze(obj.magmodel.sample_gradients.F_TOTAL(1, :, :));
+                dFdy = obj.vector_field_gradients_scale * squeeze(obj.magmodel.sample_gradients.F_TOTAL(2, :, :));
 
                 % draw inclination gradient
                 h = quiverm( ...

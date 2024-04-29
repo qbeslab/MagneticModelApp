@@ -47,7 +47,10 @@ Try these commands to see their effects on the map:
     - `"stability"`
     - `"terrain"`
     - `"topography"`
-- `g.SetVectorField(vector_field_type)`, where `vector_field_type` is one of
+- `g.SetVectorField(vector_field_type, downsample_factor, gradients_scale)`, where `vector_field_type` is one of
     - `"flow"`
     - `"gradients"`
     - `"none"`
+
+  where `downsample_factor` controls the density of the vector field, and
+  where `gradients_scale` controls the size of vectors when the type is `"gradients"`
